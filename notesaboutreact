@@ -1,0 +1,15 @@
+some state tells the app and what the data on the screen is
+
+trigger state changes into the UI
+
+want architecture w/ APIs react doesn't care about it
+
+clean architecture design -> separate data layer and UI layer
+
+REACT query -> when the component gets rendered and fires off request.  Data code is in your UI, build high order components and hooks 
+
+State management -> use REDUX & ZUSTAND 
+
+Web app not for achieving a goal 
+
+public repo to help people 

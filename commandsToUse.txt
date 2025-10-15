@@ -1,0 +1,9 @@
+npm start -> for the development server
+
+npm run build -> bundles app into static files for production
+
+npm test -> starts test runner
+
+npm run eject -> removes tool & copies build dependencies, cofig files and scripts into app directory.  can't go back
+
+ctrl + c -> exits the job
