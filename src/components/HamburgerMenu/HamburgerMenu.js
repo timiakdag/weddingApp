@@ -5,16 +5,17 @@ import Home from "../../pages/Home";
 
 function HamburgerMenu() {
 
-    return (<div>
-                <nav>
-                    <Link to="/">Home</Link> | {" "}
-                    <Link to="/our_story">Our Story</Link>
-                </nav>
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/our_story" element={<About />} />
-                </Routes>
-            </div>);
+    return ( <>
+      <nav>
+        <Link to="/">Home</Link> |{" "}
+        <Link to="/ourstory">About</Link>
+      </nav>
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/ourstory" element={<About />} />
+      </Routes>
+    </>);
 }
 
 export default HamburgerMenu;
