@@ -1,9 +1,6 @@
-import StandardBanner from "../StandardBanner/StandardBanner";
-
-
 function Home() {
     return (<div>
-                <StandardBanner />
+                <h1 className="text-3xl">T & T</h1>
             </div>);
 }
 
