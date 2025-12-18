@@ -10,22 +10,43 @@ import mobbackground from "./images/mobilebackground.webp";
 
 function App() {
   return (
-    <picture className='block min-h-screen w-full relative bg-local overflow-hidden'>
-        <source media="(min-width:1024px)" srcSet={background}/>
-        <img src={mobbackground} alt="Background" className="absolute inset-0 w-full h-full object-cover"/>
+    <div className="min-h-screen w-full relative">
+    {/* DESKTOP BACKGROUND */}
+      <div
+        className="hidden lg:block absolute inset-0 bg-cover bg-no-repeat bg-top"
+        style={{ backgroundImage: `url(${background})` }}
+      />
 
-        <div className="flex md:justify-center relative text-gray-50">
+      {/* MOBILE BACKGROUND (two stacked images) */}
+      <div className="lg:hidden flex flex-col absolute inset-0 min-h-screen w-full">
+        <img
+          src={mobbackground}
+          alt="Top Mobile"
+          className="flex-1 w-full object-cover"
+        />
+
+        <img
+          src={mobbackground}
+          alt="Bottom Mobile"
+          className="flex-1 w-full object-cover rotate-180"
+        />
+</div>
+
+      {/* FOREGROUND CONTENT */}
+      <div className="relative z-10">
+        <div className="flex md:justify-center text-gray-50">
           <Navbar />
         </div>
 
-        <div className="flex justify-center relative z-10 text-gray-50">
+        <div className="flex justify-center text-gray-50 mt-6">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/ourstory" element={<About />} />
           </Routes>
-        </div>
-    </picture>
+           </div>
+      </div>
+    </div>
   );
 }
 
