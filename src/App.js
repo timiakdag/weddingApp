@@ -30,7 +30,7 @@ function App() {
           alt="Bottom Mobile"
           className="flex-1 w-full object-cover rotate-180"
         />
-</div>
+     </div>
 
       {/* FOREGROUND CONTENT */}
       <div className="relative z-10">
