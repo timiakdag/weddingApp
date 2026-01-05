@@ -33,12 +33,12 @@ function App() {
      </div>
 
       {/* FOREGROUND CONTENT */}
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col min-h-screen">
         <div className="flex md:justify-center text-gray-50">
           <Navbar />
         </div>
 
-        <div className="flex justify-center text-gray-50 mt-6">
+        <div className="flex justify-center text-gray-50 mt-6 flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/schedule" element={<Schedule />} />
