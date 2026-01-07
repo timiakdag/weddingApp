@@ -2,7 +2,9 @@ import {useState, useEffect} from "react";
 import {AdvancedImage} from '@cloudinary/react';
 import {Cloudinary} from "@cloudinary/url-gen";
 import {fill} from '@cloudinary/url-gen/actions/resize';
-import './Home.css';
+import './Arch.css'
+import PageHeader from "../reactComponents/PageHeader";
+import InsideArchDiv from "../reactComponents/InsideArchDiv";
 
 const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
 
@@ -34,24 +36,22 @@ function Home() {
 }, [currentIndex])
 
     return (<div className="w-full">
-                <h1 className="text-3xl text-center">T & T</h1>
-                <div className="relative w-8/12 md:w-1/2 lg:w-3/4 h-[300px] lg:h-[500px] mx-auto overflow-hidden">
+                <PageHeader title="T & T" />
+                <InsideArchDiv className="relative h-[300px] lg:h-[500px] overflow-hidden arch-container arch-clip">
                     {urls.map((img, index) => (
                         <AdvancedImage
                         key={index}
                         cldImg={img}
                         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out
-                        ${index === currentIndex ? "opacity-100" : "opacity-0"} arch-image`}
-          />
-        ))}
-      </div>
+                        ${index === currentIndex ? "opacity-100" : "opacity-0"}`}
+                        />
+                    ))}
+                </InsideArchDiv>
                 <div className="text-1xl lg:text-3xl text-center pt-4">
                     <h1>September 18, 2027</h1>
                     <h1>Gunstock Mountain Resort</h1>
                 </div>
             </div>);
 }
-
-//<AdvancedImage className="w-full h-full object-contain" cldImg={cld.image('IMG_0685_qqyik0').resize(fill().width(1200).height(600)).format('auto')} />
 
 export default Home;

@@ -1,0 +1,47 @@
+/* Base arch geometry */
+.arch-container {
+  position: relative;
+}
+
+/* === IMAGE MODE (clip everything) === */
+.arch-clip {
+  overflow: hidden;
+  clip-path: ellipse(40% 100% at 50% 100%);
+}
+
+/* === TEXT MODE (clip background only) === */
+.arch-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: ellipse(40% 100% at 50% 100%);
+  background: transparent;
+  z-index: 0;
+}
+
+.arch-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* tablet */
+@media (max-width: 1024px) {
+  .arch-clip {
+    clip-path: ellipse(70% 95% at 50% 100%);
+  }
+
+  .arch-bg::before {
+    clip-path: ellipse(70% 95% at 50% 100%);
+  }
+}
+
+/* mobile */
+@media (max-width: 640px) {
+  .arch-clip {
+    clip-path: ellipse(70% 100% at 50% 100%);
+  }
+
+  .arch-bg::before {
+    clip-path: ellipse(70% 100% at 50% 100%);
+  }
+}
