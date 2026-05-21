@@ -1,6 +1,6 @@
-function PageHeader({title}){
+function PageHeader({title, className=""}){
     return(<>
-            <h1 className="text-3xl text-center">{title}</h1>
+            <h1 className={`${className} lg:text-3xl text-center`}>{title}</h1>
            </>);
 }
 

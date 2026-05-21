@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "prod": "weddingapp-3a077",
+    "test": "weddingapp-test"
+  },
+  "targets": {},
+  "etags": {}
+}

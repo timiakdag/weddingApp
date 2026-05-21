@@ -19,6 +19,7 @@ export default function Navbar() {
                 <Link to="/" className="hover:text-blue-600 font-medium">Home</Link>
                 <Link to="/ourstory" className="hover:text-blue-600 font-medium">Our Story</Link>
                 <Link to="/schedule" className="hover:text-blue-600 font-medium">Schedule</Link>
+                <Link to="/rsvp" className="hover:text-blue-600 font-medium">RSVP</Link>
             </nav>
 
             {/*Hamburger button Mobile only */}

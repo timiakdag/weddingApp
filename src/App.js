@@ -1,8 +1,10 @@
-import logo from './logo.svg';
+
 import './App.css';
 import Home from "./pages/Home";
 import About from './pages/About';
 import Schedule from './pages/Schedule';
+import LeafPage from './pages/LeafPage';
+import Rsvp from './pages/Rsvp';
 import {Routes, Route} from "react-router-dom";
 import Navbar from './reactComponents/Navbar';
 import background from "./images/websitebackground.webp";
@@ -43,6 +45,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/ourstory" element={<About />} />
+            <Route path="/rsvp" element={<Rsvp />} />
           </Routes>
            </div>
       </div>
