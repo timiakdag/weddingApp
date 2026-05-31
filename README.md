@@ -71,9 +71,15 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 
 # sites:
 https://weddingapp-test.web.app
+https://weddingapp-3a077.web.app/
 
 Need to run npm run build before every run
 
 #Timur notes:
 
 If I have an android APP, I must provide SHA-1 fingerprint authentication.
+
+Spotify notes: https://developer.spotify.com/documentation/web-api/tutorials/getting-started
+
+REACT_APP_SPOTIFY_CLIENT_ID
+REACT_APP_SPOTIFY_CLIENT_SECRET
