@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 
-import {collection,query, where ,getDocs, limit} from "firebase/firestore";
-import Fuse from "fuse.js";
+import {collection,query, where ,doc, getDoc, limit, setDoc, serverTimestamp} from "firebase/firestore";
+
 import { useMemo, useRef } from "react";
 
 import { db } from "../firebase";
+import RsvpPage from "../reactComponents/RsvpPage"
+import DietPage from "../reactComponents/DietPage";
+import SongPage from "../reactComponents/SongPage";
+import { set } from "zod";
 
 function Rsvp(){
     //:Doc variables: 
@@ -29,202 +33,161 @@ function Rsvp(){
     //  searchText - for fuzzy search when there is a misspelling
     //  searchTokens - helps scoring the search (not used yet)
     const [name,setName] = useState("");
-    const [results,setResults] = useState([]);
     const [selectedGuest,setSelectedGuest] = useState(null);
-    const [allGuests,setAllGuests] = useState([]);
     const [partyMembers, setPartyMembers] = useState([]);
     const [rsvpStatus, setRsvpStatus] = useState({});
     const [currentPage,setCurrentPage] = useState(0);
-    const [songRequests,setSongRequests] = useState([]);
-
-    //
-    //Variables 
-    const timeoutRef = useRef(null);
-    const invites = collection(db,'invitations');
+    const [dietaryRequirements,setDietaryRequirements] = useState({});
+    const [songRequests,setSongRequests] = useState({yes:[],no:[]});
+    const [accessToken,setAccessToken] = useState("");
+    const pages = {"RSVP": 0,"DIET": 1, "SONG": 2};
     const songPage = partyMembers.length + 1;
+    const responsesCollection = collection(db,"responses")
 
-    const fuse = useMemo(() => {
-      return new Fuse(allGuests,{
-        keys: ["searchText","lookupNames","fullName"],
-        threshold: 0.35,
-        ignoreLocation: true
-      });
-    },[allGuests]);
+    async function handleSubmit(e){
+      e.preventDefault(e);
 
-    //***
-    // Run when the page loads 
-    // */
-
-    useEffect(() => {
-      async function loadGuests(){
-        const snapshot = await getDocs(invites);
-        const data = snapshot.docs.map(d => d.data());
-        setAllGuests(data);
-      }
-      loadGuests();
-    },[]);
-
-    function normalize(str) {
-    return str
-      .toLowerCase()
-      .replace(/[^a-z\s]/g, "")
-      .trim();
-    }
-
-    function tier1Search(input) {
-      const query = normalize(input);
-      const tokens = query.split(" ").filter(Boolean);
-
-      if (!query) return [];
-
-      return allGuests.filter(g =>
-        tokens.every(t =>
-          g.lookupNames?.some(n => n.includes(t))
-        )
-      );
-    }
-
-    function tier2Search(input) {
-    if (!input || input.length < 2) return [];
-
-    return fuse.search(input).map(r => r.item);
-    } 
-
-    function searchGuests(input) {
-    const tier1 = tier1Search(input);
-
-    // Strong Tier 1 match → use it immediately
-    if (tier1.length >= 1) {
-      return tier1;
-    }
-
-    // Otherwise fallback to fuzzy
-    return tier2Search(input);
-    }
-
-    function handleChange(e){
-      const val = e.target.value;
-      setName(val);
-
-      debouncedSearch(val);
-      
-    }
-
-    function debouncedSearch(value) {
-      clearTimeout(timeoutRef.current);
-
-      timeoutRef.current = setTimeout(() => {
-        runSearch(value);
-      }, 250);
-    }
-
-    function runSearch(value) {
-      const inp = value.trim();
-      if (inp.length<2) {
-        setResults([]);
+       if (!selectedGuest) {
         return;
       }
-      const matches = searchGuests(inp);
-      setResults(matches);
-    }
+      try {
 
-    function handleSubmit(e){
-      e.preventDefault(e);
-      
-      //const q = query(invites, where("capital", "==", name)
-      //async -> waiting for doc
-    }
+      const partyIdentifier =
+      selectedGuest.partyIdentifier;
 
-    function selectGuest(guest) {
-    setName(guest.fullName);
-    setSelectedGuest(guest);
-    setResults([]);
-    loadParty(guest.partyIdentifier);
-    }
+      const responsePayload = {
 
-    function setGuestStatus(guestId,status) {
+        updatedAt: serverTimestamp(),
+        partyIdentifier,
+
+        selectedGuest: {
+          guestId: selectedGuest.guestId,
+          fullName: selectedGuest.fullName
+        },
+
+        partyMembers: partyMembers.map(member => ({
+        guestId: member.guestId,
+        fullName: member.fullName,
+        })),
+
+        rsvpStatus,
+
+        dietaryRequirements,
+
+        songRequests,
+      };
+    
+    const responseRef = doc(db,"responses",partyIdentifier);
+
+    await setDoc(responseRef,responsePayload)
+
+    console.log(
+      "Response saved:");
+
+    } catch (err) {
+
+      console.error("Error saving response:",err);
+    }
+  }
+  
+
+    const setGuestStatus = (guestId,status) => {
       setRsvpStatus(prev => ({
         ...prev,[guestId]:status
       }));
     }
 
-    function loadParty(partyIdentifier) {
-      const members = allGuests.filter(g => g.partyIdentifier === partyIdentifier);
-
-      setPartyMembers(members);
-
-      const initialStatus = {};
-      members.forEach(m => {initialStatus[m.guestId] = null;
-      });
-
-      setRsvpStatus(initialStatus);
-    }
-
     /*
       Pagination functions -> should probably break this functions up a bit 
     */
-    function canContinueFromRsvp() {
-        return partyMembers.every(member => rsvpStatus[member.guestId]);
+
+    function showFormButtons() {
+      if (partyMembers.length == 0) {
+        return false
+      }else{
+        return true
+      }
     }
 
-    function updateDietaryRequirement(guestId,value){
-      setDietaryRequirements(prev => ({
-        ...prev,[guestId]:value
-      }));
+    function handleDietaryChange(guestId, value) {
+  setDietaryRequirements(prev => ({
+    ...prev,
+    [guestId]: value
+  }));
+}
+
+    function getCurrentPage() {
+      let page;
+      if (currentPage==0){
+        page = <RsvpPage props={{
+          "name" : name,
+          "setName" : setName,
+          "partyMembers": partyMembers,
+          "setPartyMembers": setPartyMembers,
+          "setGuestStatus": setGuestStatus,
+          "setSelectedGuest": setSelectedGuest,
+          "setRsvpStatus": setRsvpStatus,
+          "rsvpStatus": rsvpStatus,
+          "setDietaryRequirements": setDietaryRequirements,
+          "setSongRequests":setSongRequests
+        }}/>;
+      }else if (currentPage<songPage){
+        const dietIndex = currentPage - 1;
+        page = <DietPage props={{"partyMember": partyMembers[dietIndex],
+          "dietReq": dietaryRequirements[partyMembers[dietIndex].guestId],
+          "onDietaryChange": handleDietaryChange,
+        }}/>;
+      }else{
+        return  page = <SongPage props={{songRequests,setSongRequests}}></SongPage>;
+      }
+      return page;
+    }
+
+    function nextPageLogic(){
+      setCurrentPage(prev => prev+1)
+    }
+
+    function prevPageLogic(){
+      setCurrentPage(prev => prev-1)
+    }
+
+    function showPrevButton(){
+      if(currentPage>0){
+        return true;
+      }
+      return false;
+    }
+
+    function showNextButton(){
+      if(currentPage<songPage){
+        return true;
+      }
+      return false;
+    }
+
+    function showSubmitButton(){
+      if(currentPage==songPage){
+        return true;
+      }
+      return false;
     }
 
     return(<div>
             <h1 className="text-3xl text-center">Rsvp</h1>
             <form onSubmit={handleSubmit}>
-              <input type="text" value={name} onChange={handleChange} className="border border-black text-black bg-white" placeholder="Enter your name"/>
-              {results.length > 0 && (
-                <ul className="border w-64 bg-white">
-                {results.map(g => (
-                  <li
-                    key={g.guestId}
-                    onClick={() => selectGuest(g)}
-                    className="p-2 hover:bg-gray-200 cursor-pointer">
+              {getCurrentPage()}
+              {showFormButtons() && (
+              <div className="flex justify-between items-center mt-4">
+                {showPrevButton() && (
+                  <button type="button" onClick={prevPageLogic} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black">Back</button>
+                )}
+                {showNextButton() && (
+                  <button type="button" onClick={nextPageLogic} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black">Next</button>
+                )}
+                {showSubmitButton && (
+                  <input type="submit" className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black"/>)}
               
-                    <div className="text-s text-black">
-                      {g.fullName}
-                    </div>
-                  </li>))}
-                </ul>)}
-              {partyMembers.length > 0 && (
-                <div className="mt-4 border p-3 w-96">
-                  <h2 className="text-lg font-bold mb-2">Your Party</h2>
-
-                  {partyMembers.map(member => (
-                  <div key={member.guestId} className="flex justify-between items-center mb-2">
-        
-                    <div>{member.fullName}</div>
-
-                    <div className="flex gap-2">
-                     <button 
-                        type="button" onClick={() => setGuestStatus(member.guestId, "yes")}
-                        className={`px-3 py-1 border rounded text-black transition
-                        ${rsvpStatus[member.guestId] === "yes"
-                            ? "bg-blue-200 border-blue-400"
-                            : "bg-white border-gray-300 hover:bg-gray-100"
-                        }`}>
-                        Yes
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setGuestStatus(member.guestId, "no")}
-                        className={`px-3 py-1 border rounded text-black transition
-                        ${rsvpStatus[member.guestId] === "no"
-                          ? "bg-blue-200 border-blue-400"
-                          : "bg-white border-gray-300 hover:bg-gray-100"
-                        }`}>
-                        No
-                      </button>
-                    </div>
-                    <button type="button" disabled={!canContinueFromRsvp()} onClick={() => setCurrentPage(pages.DIET)}>Next</button>
-                  </div>))}
-                </div>)}
-              <input type="submit"/>
+              </div>)}
             </form>
           </div>);
 }
