@@ -15,7 +15,7 @@ function App() {
     <div className="min-h-screen w-full relative">
     {/* DESKTOP BACKGROUND */}
       <div
-        className="hidden lg:block absolute inset-0 bg-cover bg-no-repeat bg-top"
+        className="hidden lg:block absolute inset-0 bg-cover bg-top"
         style={{ backgroundImage: `url(${background})` }}
       />
 
@@ -47,7 +47,7 @@ function App() {
             <Route path="/ourstory" element={<About />} />
             <Route path="/rsvp" element={<Rsvp />} />
           </Routes>
-           </div>
+          </div>
       </div>
     </div>
   );

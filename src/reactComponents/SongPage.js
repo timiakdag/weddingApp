@@ -1,5 +1,4 @@
 import {  useState } from "react"
-import axios from "axios";
 
 function SongPage({ props }) {
 
@@ -11,6 +10,7 @@ function SongPage({ props }) {
 
   const [noArtist, setNoArtist] = useState("");
   const [noTitle, setNoTitle] = useState("");
+
 
   function addWantedSong() {
 
@@ -68,129 +68,84 @@ function SongPage({ props }) {
     <div className="flex flex-col gap-8">
 
       {/* SONGS TO HEAR */}
+      <SongEntryBox props={{"topText": "Songs You Want To Hear",
+        "artist": yesArtist,
+        "setArtist": setYesArtist,
+        "title": yesTitle,
+        "setTitle": setYesTitle,
+        "addSong": addWantedSong,
+        "remSong": removeWantedSong,
+        "songReq": songRequests.yes
+      }}></SongEntryBox>
 
-      <div className="border p-4 rounded flex flex-col gap-3">
-
-        <h2 className="text-xl font-semibold">
-          Songs You Want To Hear
-        </h2>
-
-        <input
-          type="text"
-          placeholder="Artist"
-          value={yesArtist}
-          onChange={(e) =>
-            setYesArtist(e.target.value)
-          }
-          className="border border-black p-2 text-black"
-        />
-
-        <input
-          type="text"
-          placeholder="Song Title"
-          value={yesTitle}
-          onChange={(e) =>
-            setYesTitle(e.target.value)
-          }
-          className="border border-black p-2 text-black"
-        />
-
-        <button
-          type="button"
-          onClick={addWantedSong}
-          className="border border-black px-3 py-2 bg-white text-black"
-        >
-          Add Song
-        </button>
-
-        <div className="flex flex-col gap-2">
-
-          {songRequests.yes.map((song, index) => (
-            <div
-              key={index}
-              className="flex justify-between border p-2 text-black"
-            >
-              <span>
-                {song.artist} — {song.title}
-              </span>
-
-              <button
-                type="button"
-                className="text-black"
-                onClick={() =>
-                  removeWantedSong(index)
-                }
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-
-        </div>
-      </div>
-
-      {/* SONGS TO AVOID */}
-
-      <div className="border p-4 rounded flex flex-col gap-3">
-
-        <h2 className="text-xl font-semibold">
-          Songs You DON'T Want To Hear
-        </h2>
-
-        <input
-          type="text"
-          placeholder="Artist"
-          value={noArtist}
-          onChange={(e) =>
-            setNoArtist(e.target.value)
-          }
-          className="border border-black p-2 text-black"
-        />
-
-        <input
-          type="text"
-          placeholder="Song Title"
-          value={noTitle}
-          onChange={(e) =>
-            setNoTitle(e.target.value)
-          }
-          className="border border-black p-2 text-black"
-        />
-
-        <button
-          type="button"
-          onClick={addUnwantedSong}
-          className="border border-black px-3 py-2 bg-white text-black"
-        >
-          Add Song
-        </button>
-
-        <div className="flex flex-col gap-2">
-
-          {songRequests.no.map((song, index) => (
-            <div
-              key={index}
-              className="flex justify-between border p-2 text-black"
-            >
-              <span>
-                {song.artist} — {song.title}
-              </span>
-
-              <button
-                type="button"
-                onClick={() =>
-                  removeUnwantedSong(index)
-                }
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-
-        </div>
-      </div>
+      <SongEntryBox props={{"topText": "Songs you DON'T Want To Hear",
+      "artist": noArtist,
+      "setArtist": setNoArtist,
+      "title": noTitle,
+      "setTitle": setNoTitle,
+      "addSong": addUnwantedSong,
+      "remSong": removeUnwantedSong,
+      "songReq": songRequests.no
+      }}></SongEntryBox>
     </div>
   );
+}
+
+function SongEntryBox({props}){
+  return(<div className="p-3 rounded-lg flex flex-col gap-3 shadow-sm">
+        
+        <h2 className="text-xl font-semibold">
+          {props.topText}
+        </h2>
+
+        <input
+          type="text"
+          placeholder="Artist"
+          value={props.artist}
+          onChange={(e) =>
+            props.setArtist(e.target.value)
+          }
+          className="border border-black p-2 text-black"
+        />
+
+        <input
+          type="text"
+          placeholder="Song Title"
+          value={props.title}
+          onChange={(e) =>
+            props.setTitle(e.target.value)
+          }
+          className="border border-black p-2 text-black"
+        />
+
+        <button
+          type="button"
+          onClick={props.addSong}
+          className="border border-black px-3 py-2 bg-white text-black"
+        >
+          Add Song
+        </button>
+        <div className="flex flex-col gap-2">
+
+          {props.songReq.map((song, index) => (
+            <div key={index} className="flex items-center justify-between
+            border rounded-md bg-white text-black overflow-hidden">
+          
+            <span className="flex-1">{song.artist} — {song.title}</span>
+
+            <div className="w-px self-stretch bg-gray-300" />
+
+            
+
+            <button type="button" onClick={() => props.remSong(index)} 
+            className="px-3 py-1 mr-2 rounded border border-black text-black hover:bg-red-50 transition">
+              Remove
+            </button>
+</div>
+          ))}
+
+        </div>
+      </div>)
 }
 
 export default SongPage;

@@ -9,6 +9,8 @@ import RsvpPage from "../reactComponents/RsvpPage"
 import DietPage from "../reactComponents/DietPage";
 import SongPage from "../reactComponents/SongPage";
 import { set } from "zod";
+import ArchedTextBox from '../reactComponents/ArchedTextBox';
+import InsideArchDiv from "../reactComponents/InsideArchDiv";
 
 function Rsvp(){
     //:Doc variables: 
@@ -42,7 +44,9 @@ function Rsvp(){
     const [accessToken,setAccessToken] = useState("");
     const pages = {"RSVP": 0,"DIET": 1, "SONG": 2};
     const songPage = partyMembers.length + 1;
-    const responsesCollection = collection(db,"responses")
+    const responsesCollection = collection(db,"responses");
+    const [submitStatus,setSubmitStatus] = useState("idle");
+    const [isSubmitting,setIsSubmitting] = useState(false);
 
     async function handleSubmit(e){
       e.preventDefault(e);
@@ -51,7 +55,7 @@ function Rsvp(){
         return;
       }
       try {
-
+      setIsSubmitting(true);
       const partyIdentifier =
       selectedGuest.partyIdentifier;
 
@@ -80,13 +84,15 @@ function Rsvp(){
     const responseRef = doc(db,"responses",partyIdentifier);
 
     await setDoc(responseRef,responsePayload)
-
-    console.log(
-      "Response saved:");
+    localStorage.setItem("partyIdentifier",partyIdentifier);
+    setSubmitStatus("success");
 
     } catch (err) {
 
       console.error("Error saving response:",err);
+      setSubmitStatus("error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
   
@@ -140,7 +146,10 @@ function Rsvp(){
       }else{
         return  page = <SongPage props={{songRequests,setSongRequests}}></SongPage>;
       }
-      return page;
+      
+      return(<div>
+              {page}
+            </div>);
     }
 
     function nextPageLogic(){
@@ -172,9 +181,37 @@ function Rsvp(){
       return false;
     }
 
-    return(<div>
+    if (submitStatus === "success") {
+      return (
+        <div className="text-center p-6">
+          <h2 className="text-2xl mb-4">
+            Thank You!
+          </h2>
+
+          <p>
+            Your RSVP has been successfully submitted.
+          </p>
+        </div>);
+    }
+
+    if (submitStatus === "error") {
+      return (
+        <div className="text-center p-6">
+          <h2 className="text-2xl mb-4">
+            Oops
+          </h2>
+
+          <p>
+            Something unexpected happened. Please try again later.
+          </p>
+        </div>);
+    }
+    return(<div className="text-center mb-4">
             <h1 className="text-3xl text-center">Rsvp</h1>
-            <form onSubmit={handleSubmit}>
+            <InsideArchDiv>
+              <ArchedTextBox>
+                
+              <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-6">
               {getCurrentPage()}
               {showFormButtons() && (
               <div className="flex justify-between items-center mt-4">
@@ -185,10 +222,13 @@ function Rsvp(){
                   <button type="button" onClick={nextPageLogic} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black">Next</button>
                 )}
                 {showSubmitButton && (
-                  <input type="submit" className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black"/>)}
+                  <input type="submit" disabled={isSubmitting} value={isSubmitting ? "Submitting..." : "Submit"} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black"/>)}
               
               </div>)}
             </form>
+              </ArchedTextBox>
+            </InsideArchDiv>
+            
           </div>);
 }
 // const _ = doc(db, 'users', 'alovelace');

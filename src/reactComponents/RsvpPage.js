@@ -1,7 +1,7 @@
 import Fuse from "fuse.js";
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo, useRef, useEffect, useState, useCallback } from "react";
 import {db} from "../firebase";
-import {collection,query, where ,getDoc,getDocs, doc, limit} from "firebase/firestore";
+import {collection,getDoc,getDocs, doc} from "firebase/firestore";
 
 function RsvpPage({props}){
     const name = props.name;
@@ -20,80 +20,96 @@ function RsvpPage({props}){
 
     const [results,setResults] = useState([]);
     const [allGuests,setAllGuests] = useState([]);
+    const [sessionState,setSessionState] = useState("search");
+    const [loadingGuests,setLoadingGuests] = useState(true);
 
-    async function loadExistingResponse(
-  partyIdentifier
-) {
+    const loadExistingResponse = useCallback(async (partyIdentifier) => {
 
-  try {
+      try {
 
-    const responseRef = doc(
-      db,
-      "responses",
-      partyIdentifier
-    );
+        const responseRef = doc(
+          db,
+          "responses",
+          partyIdentifier);
 
-    const responseSnap =
-      await getDoc(responseRef);
+        const responseSnap = await getDoc(responseRef);
 
-    if (!responseSnap.exists()) {
-      return;
-    }
+        if (!responseSnap.exists()) {return;}
 
-    const data = responseSnap.data();
+        const data = responseSnap.data();
 
-    console.log(
-      "Existing RSVP found",
-      data
-    );
+        setRsvpStatus(data.rsvpStatus || {});
 
-    setRsvpStatus(
-      data.rsvpStatus || {}
-    );
+        setDietaryRequirements(data.dietaryRequirements || {});
 
-    setDietaryRequirements(
-      data.dietaryRequirements || {}
-    );
+        setSongRequests(data.songRequests || {yes: [],no: []});
 
-    setSongRequests(
-      data.songRequests || {
-        yes: [],
-        no: []
-      }
-    );
+      } catch (err) {
 
-  } catch (err) {
+        console.error("Error loading RSVP:",err);
+      }},[setRsvpStatus,setDietaryRequirements,setSongRequests]); 
 
-    console.error(
-      "Error loading RSVP:",
-      err
-    );
-  }
-}
-
-    const fuse = useMemo(() => {
+  const fuse = useMemo(() => {
           return new Fuse(allGuests,{
             keys: ["searchText","lookupNames","fullName"],
             threshold: 0.35,
             ignoreLocation: true
           });
         },[allGuests]);
-
-    useEffect(() => {
+  
+  //load of all data 
+  useEffect(() => {
       async function loadGuests(){
-        const snapshot = await getDocs(invites);
-        const data = snapshot.docs.map(d => d.data());
-        setAllGuests(data);
+        try{
+           const snapshot = await getDocs(invites);
+            const data = snapshot.docs.map(d => d.data());
+            setAllGuests(data);
+        }finally {
+          setLoadingGuests(false);
+        }
       }
       loadGuests();
     },[]);
 
-    function handleChange(e){
-      const val = e.target.value;
-      setName(val);
+  //Restore data from local storage
+  useEffect(() => {
 
-      debouncedSearch(val);
+    if (allGuests.length === 0) {
+      return;
     }
+
+    const savedPartyIdentifier = localStorage.getItem("partyIdentifier");
+
+    if (!savedPartyIdentifier) {
+      return;
+    }
+
+    const members = allGuests.filter(g => g.partyIdentifier === savedPartyIdentifier);
+
+    if (members.length === 0) {
+      return;
+    }
+
+    setPartyMembers(members);
+    setSelectedGuest(members[0]);
+    setName(members[0].fullName);
+    setResults([]);
+    setSessionState("party");
+
+  loadExistingResponse(savedPartyIdentifier);}, [allGuests,loadExistingResponse]);
+  
+
+  useEffect(() => {
+    return () => {
+    clearTimeout(timeoutRef.current);
+  };}, []);
+
+  function handleChange(e){
+    const val = e.target.value;
+    setName(val);
+
+    debouncedSearch(val);
+  }
 
     function debouncedSearch(value) {
       clearTimeout(timeoutRef.current);
@@ -151,14 +167,13 @@ function RsvpPage({props}){
       .trim();
     }
 
-    function selectGuest(guest) {
+    async function selectGuest(guest) {
     setName(guest.fullName);
     setSelectedGuest(guest);
     setResults([]);
     loadParty(guest.partyIdentifier);
-    loadExistingResponse(
-    guest.partyIdentifier
-  );
+    setSessionState("party");
+    loadExistingResponse(guest.partyIdentifier);
     }
 
     function loadParty(partyIdentifier) {
@@ -166,66 +181,93 @@ function RsvpPage({props}){
 
       setPartyMembers(members);
 
-      const initialStatus = {};
-      members.forEach(m => {initialStatus[m.guestId] = null;
-      });
+      setRsvpStatus(prev => {
+        const updated = { ...prev };
 
-      setRsvpStatus(initialStatus);
+        for (const member of members) {
+          updated[member.guestId] ??= null;}
+
+        return updated;})
     }
 
+    if (loadingGuests) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-3 text-black">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-black" />
+      <div className="text-sm">Loading your guest list...</div>
+    </div>
+  );
+}
 
-    return(
-        <>
-        <input type="text" value={name} onChange={handleChange} className="border border-black text-black bg-white" placeholder="Enter your name"/>
+return (
+  <>
+    {sessionState === "search" && (
+      <>
+        <input
+          type="text"
+          value={name}
+          onChange={handleChange}
+          className="border border-black text-black bg-white"
+          placeholder="Enter your name"
+        />
+
         {results.length > 0 && (
-            <ul className="border w-64 bg-white">
+          <ul className="border w-64 bg-white">
             {results.map(g => (
-                <li
-                    key={g.guestId}
-                    onClick={() => selectGuest(g)}
-                    className="p-2 hover:bg-gray-200 cursor-pointer">
-              
-                    <div className="text-s text-black">
-                      {g.fullName}
-                    </div>
-                </li>))}
-            </ul>)}
-        {partyMembers.length > 0 && (
-                <div className="mt-4 border p-3 w-96">
-                  <h2 className="text-lg font-bold mb-2">Your Party</h2>
+              <li
+                key={g.guestId}
+                onClick={() => selectGuest(g)}
+                className="p-2 hover:bg-gray-200 cursor-pointer"
+              >
+                <div className="text-s text-black">
+                  {g.fullName}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    )}
 
-                  {partyMembers.map(member => (
-                  <div key={member.guestId} className="flex justify-between items-center mb-2">
-        
-                    <div>{member.fullName}</div>
+    {sessionState === "party" && (
+      <div className="mt-4 border p-3 w-full md:w-96">
+        <h2 className="text-lg font-bold mb-2">Your Party</h2>
 
-                    <div className="flex gap-2">
-                     <button 
-                        type="button" onClick={() => setGuestStatus(member.guestId, "yes")}
-                        className={`px-3 py-1 border rounded text-black transition
-                        ${rsvpStatus[member.guestId] === "yes"
-                            ? "bg-blue-200 border-blue-400"
-                            : "bg-white border-gray-300 hover:bg-gray-100"
-                        }`}>
-                        Yes
-                      </button>
+        {partyMembers.map(member => (
+          <div key={member.guestId} className="flex justify-between items-center mb-2">
+            <div>{member.fullName}</div>
 
-                      <button
-                        type="button"
-                        onClick={() => setGuestStatus(member.guestId, "no")}
-                        className={`px-3 py-1 border rounded text-black transition
-                        ${rsvpStatus[member.guestId] === "no"
-                          ? "bg-blue-200 border-blue-400"
-                          : "bg-white border-gray-300 hover:bg-gray-100"
-                        }`}>
-                        No
-                      </button>
-                    </div>
-                  </div>))}
-                </div>)
-        }
-        </>
-    );
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setGuestStatus(member.guestId, "yes")}
+                className={`px-3 py-1 border rounded text-black transition
+                ${rsvpStatus[member.guestId] === "yes"
+                  ? "bg-blue-200 border-blue-400"
+                  : "bg-white border-gray-300 hover:bg-gray-100"
+                }`}
+              >
+                Yes
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGuestStatus(member.guestId, "no")}
+                className={`px-3 py-1 border rounded text-black transition
+                ${rsvpStatus[member.guestId] === "no"
+                  ? "bg-blue-200 border-blue-400"
+                  : "bg-white border-gray-300 hover:bg-gray-100"
+                }`}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </>
+);
 }
 
 export default RsvpPage;
