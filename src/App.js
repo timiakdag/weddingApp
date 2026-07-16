@@ -2,9 +2,11 @@
 import './App.css';
 import Home from "./pages/Home";
 import About from './pages/About';
-import Schedule from './pages/Schedule';
 import LeafPage from './pages/LeafPage';
 import Rsvp from './pages/Rsvp';
+import Schedule from './pages/Schedule';
+import Questions from './pages/Questions';
+import Accommodation from './pages/Accommodation';
 import {Routes, Route} from "react-router-dom";
 import Navbar from './reactComponents/Navbar';
 import background from "./images/websitebackground.webp";
@@ -45,6 +47,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/ourstory" element={<About />} />
+            <Route path="/q+a" element={<Questions />} />
+            <Route path="/accommodation" element={<Accommodation />} />
             <Route path="/rsvp" element={<Rsvp />} />
           </Routes>
           </div>

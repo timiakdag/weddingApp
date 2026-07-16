@@ -79,7 +79,6 @@ Need to run npm run build before every run
 
 If I have an android APP, I must provide SHA-1 fingerprint authentication.
 
-Spotify notes: https://developer.spotify.com/documentation/web-api/tutorials/getting-started
+Todo:  The form UI is a bit hard to process visually, maybe add a border across all components.  Or make some of the text boxes, dietary take up more space.
 
-REACT_APP_SPOTIFY_CLIENT_ID
-REACT_APP_SPOTIFY_CLIENT_SECRET
+      Add the ability once the user selects a guest to go back to the search state

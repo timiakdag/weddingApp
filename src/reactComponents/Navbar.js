@@ -17,11 +17,12 @@ export default function Navbar() {
             {/* Desktop Menu*/}
             <nav className="hidden md:flex p-4 space-x-6">
                 <Link to="/" className="hover:text-blue-600 font-medium">Home</Link>
+                <Link to="/Schedule" className="hover:text-blue-600 font-medium">Schedule</Link>
                 <Link to="/ourstory" className="hover:text-blue-600 font-medium">Our Story</Link>
-                <Link to="/schedule" className="hover:text-blue-600 font-medium">Schedule</Link>
+                <Link to="/q+a" className="hover:text-blue-600 font-medium">Q+A</Link>
+                <Link to="/accommodation" className="hover:text-blue-600 font-medium">Accommodation</Link>
                 <Link to="/rsvp" className="hover:text-blue-600 font-medium">RSVP</Link>
             </nav>
-
             {/*Hamburger button Mobile only */}
             <button className="md:hidden p-2 focus:outline-none" onClick={() => setOpen(!open)}>
                 <div className="space-y-1">
@@ -44,8 +45,11 @@ export default function Navbar() {
                 ${open ? "translate-x-0" : "-translate-x-full"} md:hidden z-[100]`}>
                 <nav className="flex flex-col p-6 space-y-4">
                     <Link to="/" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Home</Link>
-                    <Link to="/ourstory" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Our Story</Link>
                     <Link to="/schedule" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Schedule</Link>
+                    <Link to="/ourstory" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Our Story</Link>
+                    <Link to="/q+a" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Q+A</Link>
+                    <Link to="/accommodation" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Accommodation</Link>
+                    <Link to="/rsvp" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">RSVP</Link>
                 </nav>
             </div>
             

@@ -188,8 +188,8 @@ function Rsvp(){
             Thank You!
           </h2>
 
-          <p>
-            Your RSVP has been successfully submitted.
+          <p className="break-words">
+            RSVP has been successfully submitted.
           </p>
         </div>);
     }
@@ -206,7 +206,7 @@ function Rsvp(){
           </p>
         </div>);
     }
-    return(<div className="text-center mb-4">
+    return(<div className="text-center mb-4 w-full max-w-xs lg:max-w-lg">
             <h1 className="text-3xl text-center">Rsvp</h1>
             <InsideArchDiv>
               <ArchedTextBox>

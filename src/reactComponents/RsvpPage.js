@@ -20,8 +20,8 @@ function RsvpPage({props}){
 
     const [results,setResults] = useState([]);
     const [allGuests,setAllGuests] = useState([]);
-    const [sessionState,setSessionState] = useState("search");
-    const [loadingGuests,setLoadingGuests] = useState(true);
+    const [sessionState,setSessionState] = useState(partyMembers.length>0 ? "party":"search");
+    const [loadingGuests,setLoadingGuests] = useState(partyMembers.length>0 ? false:true);
 
     const loadExistingResponse = useCallback(async (partyIdentifier) => {
 
@@ -76,6 +76,10 @@ function RsvpPage({props}){
 
     if (allGuests.length === 0) {
       return;
+    }
+
+    if (process.env.NODE_ENV === "development") {
+    localStorage.removeItem("partyIdentifier");
     }
 
     const savedPartyIdentifier = localStorage.getItem("partyIdentifier");
@@ -201,6 +205,7 @@ function RsvpPage({props}){
 
 return (
   <>
+    <div className="flex flex-col items-center">
     {sessionState === "search" && (
       <>
         <input
@@ -230,14 +235,14 @@ return (
     )}
 
     {sessionState === "party" && (
-      <div className="mt-4 border p-3 w-full md:w-96">
+      <div className="mt-4 border p-3 w-full">
         <h2 className="text-lg font-bold mb-2">Your Party</h2>
 
         {partyMembers.map(member => (
-          <div key={member.guestId} className="flex justify-between items-center mb-2">
-            <div>{member.fullName}</div>
+          <div key={member.guestId} className="flex items-center mb-2 gap-4 justify-between">
+            <div className="flex-1 pr-2 break-words">{member.fullName}</div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setGuestStatus(member.guestId, "yes")}
@@ -266,6 +271,7 @@ return (
         ))}
       </div>
     )}
+    </div>
   </>
 );
 }
