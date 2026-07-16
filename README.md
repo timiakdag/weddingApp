@@ -79,6 +79,4 @@ Need to run npm run build before every run
 
 If I have an android APP, I must provide SHA-1 fingerprint authentication.
 
-Todo:  The form UI is a bit hard to process visually, maybe add a border across all components.  Or make some of the text boxes, dietary take up more space.
-
-      Add the ability once the user selects a guest to go back to the search state
+Todo: Add the ability once the user selects a guest to go back to the search state

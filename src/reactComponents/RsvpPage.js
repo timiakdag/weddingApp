@@ -194,6 +194,20 @@ function RsvpPage({props}){
         return updated;})
     }
 
+    function resetGuestSelection() {
+    localStorage.removeItem("partyIdentifier");
+
+    setSessionState("search");
+    setName("");
+    setResults([]);
+    setPartyMembers([]);
+    setSelectedGuest(null);
+
+    setRsvpStatus({});
+    setDietaryRequirements({});
+    setSongRequests({ yes: [], no: [] });
+}
+
     if (loadingGuests) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-3 text-black">
@@ -235,7 +249,7 @@ return (
     )}
 
     {sessionState === "party" && (
-      <div className="mt-4 border p-3 w-full">
+      <>
         <h2 className="text-lg font-bold mb-2">Your Party</h2>
 
         {partyMembers.map(member => (
@@ -269,7 +283,10 @@ return (
             </div>
           </div>
         ))}
-      </div>
+        <div flex items-center mb-2 gap-4 justify-between p-10>
+          <button type="button" onClick={()=>resetGuestSelection()} className={`px-3 py-1 border rounded text-black bg-white border-gray-300 hover:bg-gray-100`}>Change Guest</button>
+        </div>
+      </>
     )}
     </div>
   </>

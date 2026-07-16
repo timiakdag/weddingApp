@@ -211,10 +211,14 @@ function Rsvp(){
             <InsideArchDiv>
               <ArchedTextBox>
                 
-              <form onSubmit={handleSubmit} className="w-full max-w-md flex flex-col gap-6">
-              {getCurrentPage()}
+              <form onSubmit={handleSubmit} className="w-full max-w-md  min-h-[500px] max-h-[600px] flex flex-col gap-6">
+              <div className="flex-1 overflow-y-auto">
+                <div className="mt-4 p-3 w-full">
+                {getCurrentPage()}
+                </div>
+              </div>
               {showFormButtons() && (
-              <div className="flex justify-between items-center mt-4">
+              <div className="flex justify-between items-center mt-auto pt-6">
                 {showPrevButton() && (
                   <button type="button" onClick={prevPageLogic} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black">Back</button>
                 )}
