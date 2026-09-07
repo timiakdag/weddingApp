@@ -1,14 +1,9 @@
-import { useEffect, useState } from "react";
-
-import {collection,query, where ,doc, getDoc, limit, setDoc, serverTimestamp} from "firebase/firestore";
-
-import { useMemo, useRef } from "react";
-
+import { useState } from "react";
+import {doc, setDoc, serverTimestamp} from "firebase/firestore";
 import { db } from "../firebase";
 import RsvpPage from "../reactComponents/RsvpPage"
 import DietPage from "../reactComponents/DietPage";
 import SongPage from "../reactComponents/SongPage";
-import { set } from "zod";
 import ArchedTextBox from '../reactComponents/ArchedTextBox';
 import InsideArchDiv from "../reactComponents/InsideArchDiv";
 
@@ -41,10 +36,7 @@ function Rsvp(){
     const [currentPage,setCurrentPage] = useState(0);
     const [dietaryRequirements,setDietaryRequirements] = useState({});
     const [songRequests,setSongRequests] = useState({yes:[],no:[]});
-    const [accessToken,setAccessToken] = useState("");
-    const pages = {"RSVP": 0,"DIET": 1, "SONG": 2};
     const songPage = partyMembers.length + 1;
-    const responsesCollection = collection(db,"responses");
     const [submitStatus,setSubmitStatus] = useState("idle");
     const [isSubmitting,setIsSubmitting] = useState(false);
 
@@ -108,7 +100,7 @@ function Rsvp(){
     */
 
     function showFormButtons() {
-      if (partyMembers.length == 0) {
+      if (partyMembers.length === 0) {
         return false
       }else{
         return true
@@ -124,7 +116,7 @@ function Rsvp(){
 
     function getCurrentPage() {
       let page;
-      if (currentPage==0){
+      if (currentPage===0){
         page = <RsvpPage props={{
           "name" : name,
           "setName" : setName,
@@ -144,7 +136,7 @@ function Rsvp(){
           "onDietaryChange": handleDietaryChange,
         }}/>;
       }else{
-        return  page = <SongPage props={{songRequests,setSongRequests}}></SongPage>;
+        page = <SongPage props={{songRequests,setSongRequests}}></SongPage>;
       }
       
       return(<div>
@@ -175,7 +167,7 @@ function Rsvp(){
     }
 
     function showSubmitButton(){
-      if(currentPage==songPage){
+      if(currentPage===songPage){
         return true;
       }
       return false;
@@ -225,7 +217,7 @@ function Rsvp(){
                 {showNextButton() && (
                   <button type="button" onClick={nextPageLogic} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black">Next</button>
                 )}
-                {showSubmitButton && (
+                {showSubmitButton() && (
                   <input type="submit" disabled={isSubmitting} value={isSubmitting ? "Submitting..." : "Submit"} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black"/>)}
               
               </div>)}
@@ -254,46 +246,3 @@ try {
 */
 
 export default Rsvp;
-
-/*
-import {
-  onAuthStateChanged,
-  signOut
-} from "firebase/auth";
-
-import { auth } from "../firebase";
-
-import SignInForm from "../reactComponents/SignInForm";
-import UserPanel from "../reactComponents/UserPanel";
-
-function Rsvp(){
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const unsubscribe =
-      onAuthStateChanged(auth, (firebaseUser) => {
-        setUser(firebaseUser);
-      });
-
-    return () => unsubscribe();
-  }, []);
-
-  const handleSignOut = async () => {
-    await signOut(auth);
-  };
-
-    return(<div>
-            <h1 className="text-3xl text-center">Rsvp</h1>
-            {!user ? (
-        <SignInForm />
-      ) : (
-        <UserPanel
-          user={user}
-          onSignOut={handleSignOut}
-        />
-      )}
-          </div>);
-}
-          */
-
-    

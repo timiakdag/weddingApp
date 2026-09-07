@@ -1,6 +1,15 @@
 import React, {useState} from "react";
 import {Link} from "react-router-dom";
 
+const NAV_LINKS = [
+    { to: "/", label: "Home" },
+    { to: "/schedule", label: "Schedule" },
+    { to: "/ourstory", label: "Our Story" },
+    { to: "/q+a", label: "Q+A" },
+    { to: "/accommodation", label: "Accommodation" },
+    { to: "/rsvp", label: "RSVP" },
+];
+
 export default function Navbar() {
 
     const [open,setOpen] = useState(false);
@@ -16,12 +25,9 @@ export default function Navbar() {
     return(<div>
             {/* Desktop Menu*/}
             <nav className="hidden md:flex p-4 space-x-6">
-                <Link to="/" className="hover:text-blue-600 font-medium">Home</Link>
-                <Link to="/Schedule" className="hover:text-blue-600 font-medium">Schedule</Link>
-                <Link to="/ourstory" className="hover:text-blue-600 font-medium">Our Story</Link>
-                <Link to="/q+a" className="hover:text-blue-600 font-medium">Q+A</Link>
-                <Link to="/accommodation" className="hover:text-blue-600 font-medium">Accommodation</Link>
-                <Link to="/rsvp" className="hover:text-blue-600 font-medium">RSVP</Link>
+                {NAV_LINKS.map(({ to, label }) => (
+                    <Link key={to} to={to} className="hover:text-blue-600 font-medium">{label}</Link>
+                ))}
             </nav>
             {/*Hamburger button Mobile only */}
             <button className="md:hidden p-2 focus:outline-none" onClick={() => setOpen(!open)}>
@@ -44,12 +50,9 @@ export default function Navbar() {
             <div className={`fixed top-0 left-0 h-full w-48 bg-white shadow-lg transform transition-transform duration-300
                 ${open ? "translate-x-0" : "-translate-x-full"} md:hidden z-[100]`}>
                 <nav className="flex flex-col p-6 space-y-4">
-                    <Link to="/" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Home</Link>
-                    <Link to="/schedule" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Schedule</Link>
-                    <Link to="/ourstory" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Our Story</Link>
-                    <Link to="/q+a" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Q+A</Link>
-                    <Link to="/accommodation" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">Accommodation</Link>
-                    <Link to="/rsvp" onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">RSVP</Link>
+                    {NAV_LINKS.map(({ to, label }) => (
+                        <Link key={to} to={to} onClick={() => setOpen(false)} className="block w-full py-2 text-red-700 hover:text-blue-600 font-medium">{label}</Link>
+                    ))}
                 </nav>
             </div>
             

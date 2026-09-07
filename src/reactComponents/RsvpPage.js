@@ -1,5 +1,5 @@
 import Fuse from "fuse.js";
-import { useMemo, useRef, useEffect, useState, useCallback } from "react";
+import { useMemo, useRef, useEffect, useState, useCallback, Fragment } from "react";
 import {db} from "../firebase";
 import {collection,getDoc,getDocs, doc} from "firebase/firestore";
 
@@ -16,7 +16,6 @@ function RsvpPage({props}){
     const setSongRequests = props.setSongRequests;
 
     const timeoutRef = useRef(null);
-    const invites = collection(db,'invitations');
 
     const [results,setResults] = useState([]);
     const [allGuests,setAllGuests] = useState([]);
@@ -57,10 +56,11 @@ function RsvpPage({props}){
           });
         },[allGuests]);
   
-  //load of all data 
+  //load of all data
   useEffect(() => {
       async function loadGuests(){
         try{
+           const invites = collection(db,'invitations');
            const snapshot = await getDocs(invites);
             const data = snapshot.docs.map(d => d.data());
             setAllGuests(data);
@@ -100,7 +100,7 @@ function RsvpPage({props}){
     setResults([]);
     setSessionState("party");
 
-  loadExistingResponse(savedPartyIdentifier);}, [allGuests,loadExistingResponse]);
+  loadExistingResponse(savedPartyIdentifier);}, [allGuests,loadExistingResponse,setName,setSelectedGuest,setPartyMembers]);
   
 
   useEffect(() => {
@@ -210,7 +210,7 @@ function RsvpPage({props}){
 
     if (loadingGuests) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-3 text-black">
+    <div className="fixed inset-0 flex flex-col items-center justify-center gap-3 text-black">
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-black" />
       <div className="text-sm">Loading your guest list...</div>
     </div>
@@ -252,11 +252,12 @@ return (
       <>
         <h2 className="text-lg font-bold mb-2">Your Party</h2>
 
+        <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2">
         {partyMembers.map(member => (
-          <div key={member.guestId} className="flex items-center mb-2 gap-4 justify-between">
-            <div className="flex-1 pr-2 break-words">{member.fullName}</div>
+          <Fragment key={member.guestId}>
+            <div className="text-right break-words">{member.fullName}</div>
 
-            <div className="flex gap-2 shrink-0">
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setGuestStatus(member.guestId, "yes")}
@@ -281,9 +282,11 @@ return (
                 No
               </button>
             </div>
-          </div>
+          </Fragment>
         ))}
-        <div flex items-center mb-2 gap-4 justify-between p-10>
+        </div>
+        <br />
+        <div className="flex items-center mb-2 gap-4 justify-between p-10">
           <button type="button" onClick={()=>resetGuestSelection()} className={`px-3 py-1 border rounded text-black bg-white border-gray-300 hover:bg-gray-100`}>Change Guest</button>
         </div>
       </>

@@ -75,8 +75,16 @@ https://weddingapp-3a077.web.app/
 
 Need to run npm run build before every run
 
-#Timur notes:
+#Timur notes: To do make sure all the buttons in RSVP are algined if names are different length
+
+HAve next and prev buttons there but on first and last page inactive 
 
 If I have an android APP, I must provide SHA-1 fingerprint authentication.
 
-Todo: Add the ability once the user selects a guest to go back to the search state
+firebase use -> switch environments
+
+firebase deploy --only hosting 
+
+run npm run build in between deployments
+
+for test i would do npm run build:test

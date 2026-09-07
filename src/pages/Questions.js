@@ -1,6 +1,4 @@
-import PageHeader from '../reactComponents/PageHeader';
-import InsideArchDiv from '../reactComponents/InsideArchDiv';
-import ArchedTextBox from '../reactComponents/ArchedTextBox';
+import ContentWrapper from '../reactComponents/ContentWrapper';
 import FAQItem from '../reactComponents/FAQItem';
 import {Link} from "react-router-dom"
 
@@ -19,22 +17,21 @@ function Questions() {
       },
     {question:"Are children allowed at the wedding?",
       answer:"While we adore your little ones, we've decided to keep our wedding and reception an adults-only event."
+    },
+    {question:"Where is the ceremony?",
+      answer:"Weather allowing, the ceremony will be at the top of Gunstock mountain.  All guests must take the chairlift up and down.  Unfortunately there is no option for getting to the ceremony outside of the chair lift"
+    },
+  {question:"What footwear would be recommended?",
+      answer:"Guests will be going up and down hills off the ski lift to get to the reception.  Stiletto and other shoes like that would not be advised."
     }]
-    return(<div className='w-full'>
-            <PageHeader title="Q+A"/>
-            <br></br>
-            <InsideArchDiv>
-        <ArchedTextBox>
-          <div className='px-8 lg:px-20 text-center leading-relaxed text-base lg:text-lg max-w-prose md:w-[250px] lg:w-auto py-4 lg:py-0'>
-            {questions.map((item,index)=> (
+
+    return(<ContentWrapper title="Q+A">
+{questions.map((item,index)=> (
                 <FAQItem key={index}
                          question={item.question}
                          answer={item.answer}/>
             ))}
-          </div>
-        </ArchedTextBox>
-      </InsideArchDiv>
-           </div>);
+    </ContentWrapper>);
 
 }
 

@@ -2,7 +2,6 @@
 import './App.css';
 import Home from "./pages/Home";
 import About from './pages/About';
-import LeafPage from './pages/LeafPage';
 import Rsvp from './pages/Rsvp';
 import Schedule from './pages/Schedule';
 import Questions from './pages/Questions';

@@ -16,7 +16,7 @@ const cld = new Cloudinary({
 })
 
 const urls = ['IMG_0685_qqyik0','IMG_1152_hv2jud'].map(publicId => {const img = cld.image(publicId);
-    img.resize(fill().width(1200).height(600).gravity("faces" || "auto"));
+    img.resize(fill().width(1200).height(600).gravity("faces"));
     img.format('auto');
     return img;
 });
