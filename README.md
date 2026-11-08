@@ -1,90 +1,77 @@
-# Getting Started with Create React App
+# Wedding Website & RSVP App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A wedding website where guests look up their name, RSVP for their entire party, share dietary
+requirements, and request songs for the reception.
 
-## Available Scripts
+## Project
 
-In the project directory, you can run:
+I built my own wedding website to gain experience and knowledge as a full stack developer, and to
+use AI tools in the build. I wanted to learn about React, JavaScript, CSS, website deployment and
+the various tools used to create full stack applications. I used Claude Code as a reviewer and
+guide along the way: getting peer review on my changes, having concepts explained using my own
+code, and keeping project notes up to date.
 
-### `npm start`
+## Tech stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **React 19** (Create React App) with **react-router-dom** for page routing
+- **Tailwind CSS** for styling
+- **Firebase**: Firestore for data, Firebase Hosting with separate test and production projects
+- **Cloudinary** for hosting and resizing the home page photos
+- **Fuse.js** for fuzzy name search
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Learning
 
-### `npm test`
+I think one of the coolest aspects of React is the reusable components. My background is in
+MUMPS, a procedural language co-created by one of the founders of the company I worked for, so we
+did not follow the object-oriented programming model. What surprised me is that modern React is
+also not object oriented: a component is just a function that takes in data (props and state) and
+returns what the UI should look like. You build pages by composing small components together
+rather than by inheritance. Learning to break down the UI and establish these components was
+challenging but made sense once the project started coming together.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Using Firebase, I was surprised by how much functionality Google provides in the free tier. They
+provide a lot of data storage and functionality for free, which is something I appreciate as I am
+not building the website for profit.
 
-### `npm run build`
+## Design decisions
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+The use case of my application is fairly small, with a maximum of 150 guests. I still wanted to
+design each piece carefully, with two goals in mind: guests should be able to find themselves
+easily, and the data should stay clean no matter how many times someone submits.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+**Data model.** Each guest is stored with a unique identifier, and each guest also carries a party
+identifier shared by everyone in their party, similar to a foreign key in a relational database.
+When a guest searches for their name, their entire party is pulled up. This allows guests to RSVP
+for their entire party. The RSVP answers are saved to a separate collection in the database, and
+each response is keyed by the party identifier. This means that resubmitting an RSVP overwrites
+the data and does not create duplicates. It also lets a returning guest pick up where they left
+off with their previous answers.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**Name search.** Guests misspell names and use nicknames, so the search runs in two steps. It first
+tries an exact match against a normalized list of each guest's name variations. If that fails, it
+falls back to a fuzzy search that tolerates typos. The search waits until the guest pauses typing
+before it runs.
 
-### `npm run eject`
+**Environments.** There are separate test and production Firebase projects, so I can try out
+changes against test data before deploying to the real site.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Known tradeoffs and next steps
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **Security:** the guest list is currently loaded into the browser and searched there, and RSVP
+  responses are protected only by an unguessable ID rather than by sign-in. That was a deliberate
+  tradeoff for a small private site. Next I plan to move the name search into a Firebase Cloud
+  Function, so the browser only receives the party that matches the search and never sees the full
+  guest list.
+- **Deployment:** builds and deploys are run by hand. CI that builds and deploys automatically is a
+  future improvement.
+- **Forms:** the RSVP form uses plain React state. Moving it to react-hook-form with zod validation
+  is planned.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Running locally
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-
-# sites:
-https://weddingapp-test.web.app
-https://weddingapp-3a077.web.app/
-
-Need to run npm run build before every run
-
-#Timur notes: To do make sure all the buttons in RSVP are algined if names are different length
-
-HAve next and prev buttons there but on first and last page inactive 
-
-If I have an android APP, I must provide SHA-1 fingerprint authentication.
-
-firebase use -> switch environments
-
-firebase deploy --only hosting 
-
-run npm run build in between deployments
-
-for test i would do npm run build:test
+1. `npm install`
+2. Create a `.env` file with your own Firebase config (`REACT_APP_FIREBASE_API_KEY`,
+   `REACT_APP_FIREBASE_AUTH_DOMAIN`, `REACT_APP_FIREBASE_PROJECT_ID`,
+   `REACT_APP_FIREBASE_STORAGE_BUCKET`, `REACT_APP_FIREBASE_MESSAGING_SENDER_ID`,
+   `REACT_APP_FIREBASE_APP_ID`) and `REACT_APP_CLOUDINARY_CLOUD_NAME`.
+3. `npm start`, then open http://localhost:3000

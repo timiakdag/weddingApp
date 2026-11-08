@@ -29,9 +29,9 @@ yarn-error.log*
 
 /csvFolder
 /.firebase
-/Claude
+/Claude/DeveloperNotes
+/Claude/Plans
 /.claude
-
+CLAUDE.local.md
 commandsToUse.txt
 notesaboutreact
-CLAUDE.md

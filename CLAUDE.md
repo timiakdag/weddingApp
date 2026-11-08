@@ -1,64 +1,102 @@
 # Wedding App — Project Context
 
-A wedding website/RSVP app: guests look themselves up, RSVP for their party, list dietary
-requirements, and submit song requests. This is the owner's first React project, built to learn
-web development on something they actually care about.
-
-## Your role here
-
-Act as a senior software engineer mentoring a developer who is new to React and web dev in
-general. Concretely, that means:
-
-- **Peer review**: when reviewing code, don't just list fixes — explain *why* something matters
-  (a stale closure, a missing dependency, a Firestore security gap) so the reasoning transfers to
-  the next feature. Distinguish "this will bite you" from "this is a style nit" from "here's a
-  concept worth knowing for later." Use the `peer-review` skill for a structured pass.
-- **Writing features**: match the existing conventions in `Claude/conventions.md` unless asked to
-  change them. Prefer small, explainable diffs over clever ones — the owner needs to be able to
-  read back what was written.
-- **Explaining concepts**: ground explanations in this codebase's own code rather than generic
-  examples where possible. Use the `explain-concept` skill for a structured walkthrough, and check
-  `Claude/learning-log.md` first so you're not re-explaining something already covered.
-- Calibrate depth using `Claude/learning-log.md` and `notesaboutreact` (root) — the owner has
-  already encountered terms like React Query, Redux/Zustand, and "separate data layer from UI
-  layer" from outside reading, but hasn't necessarily used them yet. Don't assume mastery just
-  because a term has come up.
+A wedding website with a guest RSVP flow. Guests look themselves up by name, RSVP for every member
+of their party, record dietary requirements, and submit song requests. The rest of the site is
+informational pages (schedule, our story, FAQ, accommodation).
 
 ## Tech stack
 
-- **React 19** via Create React App (`react-scripts` 5) — not Vite, not Next.js.
-- **react-router-dom v7** for routing (see `src/App.js`).
-- **Tailwind CSS** for styling, utility classes directly in JSX; a couple of hand-rolled CSS files
-  (`App.css`, `pages/Arch.css`) for decorative arch shapes.
-- **Firebase**: Firestore for data (`src/firebase.js`), Firebase Hosting for deploys. `firebaseui`
-  is a dependency but auth is currently unused (see `Claude/architecture.md`).
-- **Fuse.js** for fuzzy guest-name search, **react-hook-form** + **zod** are installed but not yet
-  used in the current RSVP form (it's hand-rolled `useState`, not RHF).
-- **Cloudinary** (`@cloudinary/react`, `@cloudinary/url-gen`) is installed but not yet wired into
-  any page.
+- **React 19** on Create React App (`react-scripts` 5).
+- **react-router-dom v7** for client-side routing (`src/App.js`).
+- **Tailwind CSS 3** utility classes in JSX. Plain CSS files (`App.css`, `pages/Arch.css`,
+  `pages/ArchedText.css`, `pages/Home.css`) cover the decorative arch shapes that are awkward to
+  express as utilities.
+- **Firebase**: Firestore is the datastore (`src/firebase.js` exports `db`). Firebase Hosting
+  serves the site, with separate prod and test projects.
+- **Cloudinary** (`@cloudinary/react`, `@cloudinary/url-gen`) serves the home-page image carousel
+  in `src/pages/Home.js`, configured via `REACT_APP_CLOUDINARY_CLOUD_NAME`.
+- **Fuse.js** for fuzzy guest-name search.
+- Installed but not yet used: `react-hook-form`, `zod`, `@hookform/resolvers`, `firebaseui`,
+  `axios`. The RSVP form is managed with plain `useState`.
 
-## Details live in `Claude/`
+## Architecture
 
-- `Claude/architecture.md` — page/component structure, routing table, the RSVP multi-step flow.
-- `Claude/firestore-schema.md` — the `invitations` and `responses` collections and their fields.
-- `Claude/conventions.md` — patterns already in use (the grouped `props` object convention,
-  debounced search, state-lifted-to-parent, etc.) so new code stays consistent.
-- `Claude/deployment.md` — the two Firebase projects (prod/test), build-before-deploy gotcha.
-- `Claude/roadmap-and-notes.md` — the owner's own TODOs (from `README.md`, `Reminders.txt`) plus
-  in-progress/unwired work (`src/pages/Gifts.js` is empty and not yet routed).
-- `Claude/learning-log.md` — running log of concepts already explained, so mentoring builds
-  instead of repeating.
+- `src/pages/`: routed screens. `src/reactComponents/`: shared components and the RSVP sub-steps.
+- Routes (`src/App.js`): `/` Home, `/schedule`, `/ourstory` (About), `/q+a` (Questions),
+  `/accommodation`, `/rsvp`.
+- Informational pages share a layout through `ContentWrapper` (`PageHeader` + `InsideArchDiv` +
+  `ArchedTextBox`).
+- `App.js` swaps the desktop and mobile background images with Tailwind responsive classes.
 
-Other root files worth knowing about but not yet folded into `Claude/`: `commandsToUse.txt`
-(npm/CLI cheatsheet the owner is keeping for themselves), `notesaboutreact` (raw notes from
-outside learning), `updated_rsvp_implementation_plan.docx` (binary — can't be read directly; ask
-the owner to paste relevant sections in if it needs to inform a task).
+### RSVP flow
+
+`src/pages/Rsvp.js` owns all form state (`selectedGuest`, `partyMembers`, `rsvpStatus`,
+`dietaryRequirements`, `songRequests`, `currentPage`, submit status) and chooses the step to render:
+
+1. **Step 0, `RsvpPage`**: loads the full `invitations` collection once, searches it client-side,
+   then shows the matched party with yes/no buttons for each member.
+2. **Steps 1..N, `DietPage`**: one step per party member, with a free-text dietary field.
+3. **Final step, `SongPage`**: "play" and "don't play" lists of `{ artist, title }`.
+
+On submit, `setDoc` writes a single document to `responses/{partyIdentifier}`, so resubmitting
+overwrites the previous response instead of duplicating it. `partyIdentifier` is cached in
+`localStorage` so a returning guest's party and earlier answers reload. That cache is cleared on
+mount when `NODE_ENV === "development"`.
+
+### Firestore data
+
+- `invitations`: one document per guest. Fields: `guestId`, `fullName`, `partyIdentifier`,
+  `partyMembers`, `allowedGuests`, `lookupNames`, `searchText`, `searchTokens` (unused), and
+  `pages`. It is read-only from the client and populated outside the app.
+- `responses`: one document per party, keyed by `partyIdentifier`. Fields: `updatedAt`,
+  `selectedGuest`, `partyMembers`, `rsvpStatus` (by `guestId`), `dietaryRequirements` (by
+  `guestId`), and `songRequests: { yes: [], no: [] }`.
+
+### Not yet wired up
+
+These files are on disk but not routed or imported: `pages/Gifts.js` (empty, a planned registry
+page), `pages/Diet.js`, `reactComponents/FormCard.js`, `SongInput.js` and `InnerArchDiv.js`. The
+site navigation, including the mobile hamburger menu, is `reactComponents/Navbar.js`.
+Authentication is not active: `firebase.js` exports only `db`, so adding sign-in would start with
+initializing Firebase Auth there.
+
+## Conventions
+
+- **RSVP step components take one grouped `props` object.** For example,
+  `function RsvpPage({ props })` is called as `<RsvpPage props={{ name, setName, ... }} />`. This
+  applies to `RsvpPage`, `DietPage`, `SongPage` and `SongEntryBox`. Other components destructure
+  named props normally (`function PageHeader({ title, className })`). Match whichever style the
+  surrounding code uses.
+- **State is lifted to the parent.** Step components are presentational and call the setters they
+  receive. There is no Context or external state library.
+- **Search is tiered.** An exact normalized substring match against `lookupNames` runs first. Only
+  if it finds nothing does a Fuse.js fuzzy search run (threshold 0.35). Input is debounced 250 ms
+  through a `useRef` timer. Reuse this pattern for any other searchable list.
+- **Styling is Tailwind first.** Use plain CSS only for shapes that utilities can't express well.
+- **Data shapes are documented in comments.** Firestore-backed components open with a comment
+  describing their state and document shape, because the project has no TypeScript or prop-types.
+
+## Config and deployment
+
+- Environment variables follow CRA's `.env` file convention (`.env`, `.env.development`,
+  `.env.production`, `.env.test`, all gitignored). Required: `REACT_APP_FIREBASE_*` (see
+  `src/firebase.js`) and `REACT_APP_CLOUDINARY_CLOUD_NAME`.
+- Firebase aliases in `.firebaserc` are `prod` and `test`. `firebase.json` serves `build/` as a
+  SPA, rewriting all routes to `index.html`.
+- Deploy steps: `firebase use <prod|test>`, then `npm run build` (or `npm run build:test`, which
+  uses `.env.test`), then `firebase deploy --only hosting`.
 
 ## Known gotchas
 
-- `npm run build` must be run before every `firebase deploy` — there's no CI wiring it up
-  automatically yet.
-- Firestore security rules (confirmed with the owner, see `Claude/firestore-schema.md`) let any
-  client create/update/read any `responses` document — there's no per-party ownership check, just
-  an unguessable UUID as the document ID. Known and accepted tradeoff, not an oversight to "fix"
-  without discussing it first.
+- **Build before every deploy.** There's no CI, so `firebase deploy` publishes whatever is in
+  `build/`. Skipping `npm run build` ships a stale site.
+- **Firestore rules are permissive by design.** `invitations` is client read-only. `responses`
+  allows any client to create, update and read any document. The only protection is that the
+  document ID is an unguessable UUID. This is an accepted tradeoff for a low-stakes RSVP site.
+  Discuss it before tightening, because stricter ownership checks would need Firebase Auth or
+  App Check.
+- **The dev-mode `localStorage` clear** in the RSVP flow is intentional. Keep the
+  `NODE_ENV` guard if you add more persisted state.
+
+More detail, where present, is in `Claude/` (`architecture.md`, `firestore-schema.md`,
+`conventions.md`, `deployment.md`).
