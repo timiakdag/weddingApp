@@ -1,0 +1,16 @@
+/* Home.css or your global stylesheet */
+.arch-image {
+  clip-path: ellipse(40% 100% at 50% 100%);
+}
+
+@media (max-width: 1024px) {
+  .arch-image {
+    clip-path: ellipse(70% 95% at 50% 100%); /* shallower arch on tablets */
+  }
+}
+
+@media (max-width: 640px) {
+  .arch-image {
+    clip-path: ellipse(70% 100% at 50% 100%); /* even shallower on mobile */
+  }
+}

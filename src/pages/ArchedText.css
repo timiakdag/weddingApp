@@ -1,0 +1,22 @@
+.arch-text {
+  clip-path: ellipse(40% 100% at 50% 100%);
+  padding: 3rem 2.5rem 5rem; /* bottom padding protects text */
+  text-align: center;
+  line-height: 1.7;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .arch-text {
+    clip-path: ellipse(70% 95% at 50% 100%);
+    padding-bottom: 4.5rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .arch-text {
+    clip-path: ellipse(70% 100% at 50% 100%);
+    padding-bottom: 5rem;
+  }
+}
