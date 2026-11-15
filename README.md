@@ -22,7 +22,7 @@ code, and keeping project notes up to date.
 ## Learning
 
 I think one of the coolest aspects of React is the reusable components. My background is in
-MUMPS, a procedural language co-created by one of the founders of the company I worked for, so we
+MUMPS, a procedural language co-created by one of the founders of the company I work for, so we
 did not follow the object-oriented programming model. What surprised me is that modern React is
 also not object oriented: a component is just a function that takes in data (props and state) and
 returns what the UI should look like. You build pages by composing small components together

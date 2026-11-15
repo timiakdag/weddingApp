@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {doc, setDoc, serverTimestamp} from "firebase/firestore";
 import { db } from "../firebase";
-import RsvpPage from "../reactComponents/RsvpPage"
+import RsvpPage, { additionalGuestId } from "../reactComponents/RsvpPage"
 import DietPage from "../reactComponents/DietPage";
 import SongPage from "../reactComponents/SongPage";
 import ArchedTextBox from '../reactComponents/ArchedTextBox';
@@ -13,7 +13,11 @@ function Rsvp(){
     // results -> for the type ahead lookup on selecting guests
     // selectedGuest -> the guest object from firebase
     // allGuests -> every guest from the database
-    // partyMembers -> list of members in a party
+    // partyMembers -> list of members in a party (invitations docs only)
+    // additionalGuests -> extra guests named by the party, one slot per allowedGuests
+    //   { guestId: "<hostGuestId>-guest-<i>", fullName, isAdditionalGuest: true, hostGuestId }
+    //   A non-empty name means the extra guest is attending (rsvpStatus "yes").
+    // attendees -> derived: partyMembers + named additionalGuests. Drives diet pages and the saved partyMembers.
     // rsvpStatus -> Yes or no answer from the party
     // currentPage -> Pagination of RSVP form
     // songRequests -> array of song requests
@@ -32,11 +36,13 @@ function Rsvp(){
     const [name,setName] = useState("");
     const [selectedGuest,setSelectedGuest] = useState(null);
     const [partyMembers, setPartyMembers] = useState([]);
+    const [additionalGuests, setAdditionalGuests] = useState([]);
     const [rsvpStatus, setRsvpStatus] = useState({});
     const [currentPage,setCurrentPage] = useState(0);
     const [dietaryRequirements,setDietaryRequirements] = useState({});
     const [songRequests,setSongRequests] = useState({yes:[],no:[]});
-    const songPage = partyMembers.length + 1;
+    const attendees = [...partyMembers, ...additionalGuests.filter(g => g.fullName.trim())];
+    const songPage = attendees.length + 1;
     const [submitStatus,setSubmitStatus] = useState("idle");
     const [isSubmitting,setIsSubmitting] = useState(false);
 
@@ -61,10 +67,17 @@ function Rsvp(){
           fullName: selectedGuest.fullName
         },
 
-        partyMembers: partyMembers.map(member => ({
-        guestId: member.guestId,
-        fullName: member.fullName,
-        })),
+        partyMembers: attendees.map(member => member.isAdditionalGuest
+          ? {
+              guestId: member.guestId,
+              fullName: member.fullName.trim(),
+              isAdditionalGuest: true,
+              hostGuestId: member.hostGuestId,
+            }
+          : {
+              guestId: member.guestId,
+              fullName: member.fullName,
+            }),
 
         rsvpStatus,
 
@@ -93,6 +106,55 @@ function Rsvp(){
       setRsvpStatus(prev => ({
         ...prev,[guestId]:status
       }));
+
+      // An extra guest can't come without their host, so clear the host's extra guests.
+      if (status === "no") {
+        removeAdditionalGuests(
+          additionalGuests.filter(g => g.hostGuestId === guestId).map(g => g.guestId));
+      }
+    }
+
+    function omitKeys(obj, keys) {
+      const copy = { ...obj };
+      for (const key of keys) {
+        delete copy[key];
+      }
+      return copy;
+    }
+
+    // Drop answers keyed by these ids so no stale entries are saved.
+    function clearAnswers(guestIds) {
+      setRsvpStatus(prev => omitKeys(prev, guestIds));
+      setDietaryRequirements(prev => omitKeys(prev, guestIds));
+    }
+
+    function removeAdditionalGuests(guestIds) {
+      if (guestIds.length === 0) {
+        return;
+      }
+      setAdditionalGuests(prev => prev.filter(g => !guestIds.includes(g.guestId)));
+      clearAnswers(guestIds);
+    }
+
+    function setAdditionalGuestName(hostGuestId, index, name) {
+      const guestId = additionalGuestId(hostGuestId, index);
+
+      if (name === "") {
+        removeAdditionalGuests([guestId]);
+        return;
+      }
+
+      const guest = { guestId, fullName: name, isAdditionalGuest: true, hostGuestId };
+      setAdditionalGuests(prev => prev.some(g => g.guestId === guestId)
+        ? prev.map(g => (g.guestId === guestId ? guest : g))
+        : [...prev, guest]);
+
+      // Only whitespace typed so far: keep the text in the box, but they aren't attending yet.
+      if (name.trim()) {
+        setRsvpStatus(prev => ({ ...prev, [guestId]: "yes" }));
+      } else {
+        clearAnswers([guestId]);
+      }
     }
 
     /*
@@ -122,6 +184,9 @@ function Rsvp(){
           "setName" : setName,
           "partyMembers": partyMembers,
           "setPartyMembers": setPartyMembers,
+          "additionalGuests": additionalGuests,
+          "setAdditionalGuests": setAdditionalGuests,
+          "setAdditionalGuestName": setAdditionalGuestName,
           "setGuestStatus": setGuestStatus,
           "setSelectedGuest": setSelectedGuest,
           "setRsvpStatus": setRsvpStatus,
@@ -131,8 +196,8 @@ function Rsvp(){
         }}/>;
       }else if (currentPage<songPage){
         const dietIndex = currentPage - 1;
-        page = <DietPage props={{"partyMember": partyMembers[dietIndex],
-          "dietReq": dietaryRequirements[partyMembers[dietIndex].guestId],
+        page = <DietPage props={{"partyMember": attendees[dietIndex],
+          "dietReq": dietaryRequirements[attendees[dietIndex].guestId],
           "onDietaryChange": handleDietaryChange,
         }}/>;
       }else{

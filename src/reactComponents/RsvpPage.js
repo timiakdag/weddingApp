@@ -3,11 +3,19 @@ import { useMemo, useRef, useEffect, useState, useCallback, Fragment } from "rea
 import {db} from "../firebase";
 import {collection,getDoc,getDocs, doc} from "firebase/firestore";
 
+// Stable id for an extra-guest slot, so rsvpStatus/dietaryRequirements keys survive resubmits.
+export function additionalGuestId(hostGuestId, index) {
+    return `${hostGuestId}-guest-${index}`;
+}
+
 function RsvpPage({props}){
     const name = props.name;
     const setName = props.setName;
     const partyMembers = props.partyMembers;
     const setPartyMembers = props.setPartyMembers;
+    const additionalGuests = props.additionalGuests;
+    const setAdditionalGuests = props.setAdditionalGuests;
+    const setAdditionalGuestName = props.setAdditionalGuestName;
     const setGuestStatus = props.setGuestStatus;
     const setSelectedGuest = props.setSelectedGuest;
     const setRsvpStatus = props.setRsvpStatus;
@@ -43,10 +51,13 @@ function RsvpPage({props}){
 
         setSongRequests(data.songRequests || {yes: [],no: []});
 
+        // Extra guests only exist in responses, never in invitations.
+        setAdditionalGuests((data.partyMembers || []).filter(m => m.isAdditionalGuest));
+
       } catch (err) {
 
         console.error("Error loading RSVP:",err);
-      }},[setRsvpStatus,setDietaryRequirements,setSongRequests]); 
+      }},[setRsvpStatus,setDietaryRequirements,setSongRequests,setAdditionalGuests]);
 
   const fuse = useMemo(() => {
           return new Fuse(allGuests,{
@@ -201,6 +212,7 @@ function RsvpPage({props}){
     setName("");
     setResults([]);
     setPartyMembers([]);
+    setAdditionalGuests([]);
     setSelectedGuest(null);
 
     setRsvpStatus({});
@@ -282,6 +294,23 @@ return (
                 No
               </button>
             </div>
+
+            {Array.from({ length: Number(member.allowedGuests) || 0 }, (_, i) => {
+              const extraId = additionalGuestId(member.guestId, i);
+              const extraGuest = additionalGuests.find(g => g.guestId === extraId);
+              return (
+                <input
+                  key={extraId}
+                  type="text"
+                  value={extraGuest?.fullName ?? ""}
+                  onChange={e => setAdditionalGuestName(member.guestId, i, e.target.value)}
+                  disabled={rsvpStatus[member.guestId] === "no"}
+                  maxLength={60}
+                  placeholder="Guest's name"
+                  className="col-span-2 border border-black text-black bg-white px-2 py-1 disabled:opacity-50"
+                />
+              );
+            })}
           </Fragment>
         ))}
         </div>

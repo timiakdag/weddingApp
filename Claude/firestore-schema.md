@@ -62,8 +62,13 @@ existing document.
   updatedAt: serverTimestamp(),
   partyIdentifier: string,
   selectedGuest: { guestId: string, fullName: string },
-  partyMembers: [{ guestId: string, fullName: string }, ...],
-  rsvpStatus: { [guestId]: "yes" | "no" | null },
+  partyMembers: [
+    { guestId: string, fullName: string },            // invited guests (from invitations)
+    { guestId: "<hostGuestId>-guest-<i>", fullName: string,
+      isAdditionalGuest: true, hostGuestId: string }, // extra guests, one slot per allowedGuests
+    ...
+  ],
+  rsvpStatus: { [guestId]: "yes" | "no" | null },   // extra guests are always "yes" (named = attending)
   dietaryRequirements: { [guestId]: string },
   songRequests: {
     yes: [{ artist: string, title: string }, ...],
@@ -73,7 +78,10 @@ existing document.
 ```
 
 On a return visit, `loadExistingResponse` in `RsvpPage.js` reads the document back and fills in
-`rsvpStatus`, `dietaryRequirements` and `songRequests`.
+`rsvpStatus`, `dietaryRequirements` and `songRequests`. It also restores extra guests by picking
+the `isAdditionalGuest` entries out of `partyMembers`. Extra guests exist only in `responses`, so
+the guest search (which covers `invitations` only) never finds them. Their IDs are deterministic,
+so editing a name keeps the same keys in `rsvpStatus` and `dietaryRequirements`.
 
 ## Leftover snippet
 

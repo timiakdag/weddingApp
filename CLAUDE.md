@@ -50,7 +50,10 @@ mount when `NODE_ENV === "development"`.
   `pages`. It is read-only from the client and populated outside the app.
 - `responses`: one document per party, keyed by `partyIdentifier`. Fields: `updatedAt`,
   `selectedGuest`, `partyMembers`, `rsvpStatus` (by `guestId`), `dietaryRequirements` (by
-  `guestId`), and `songRequests: { yes: [], no: [] }`.
+  `guestId`), and `songRequests: { yes: [], no: [] }`. `partyMembers` also holds any extra guests
+  a party named (up to each guest's `allowedGuests`). These are flagged
+  `isAdditionalGuest: true` with a `hostGuestId`, and have the deterministic ID
+  `<hostGuestId>-guest-<i>`. A named extra guest is recorded as attending.
 
 ### Not yet wired up
 
