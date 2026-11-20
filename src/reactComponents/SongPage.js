@@ -3,7 +3,7 @@ import {  useState } from "react"
 function SongPage({ props }) {
 
   const songRequests = props.songRequests;
-  const setSongRequests = props.setSongRequests;
+  const dispatch = props.dispatch;
 
   const [yesArtist, setYesArtist] = useState("");
   const [yesTitle, setYesTitle] = useState("");
@@ -21,10 +21,7 @@ function SongPage({ props }) {
       title: yesTitle.trim(),
     };
 
-    setSongRequests(prev => ({
-      ...prev,
-      yes: [...prev.yes, newSong]
-    }));
+    dispatch({ type: "songAdded", list: "yes", song: newSong });
 
     setYesArtist("");
     setYesTitle("");
@@ -39,10 +36,7 @@ function SongPage({ props }) {
       title: noTitle.trim(),
     };
 
-    setSongRequests(prev => ({
-      ...prev,
-      no: [...prev.no, newSong]
-    }));
+    dispatch({ type: "songAdded", list: "no", song: newSong });
 
     setNoArtist("");
     setNoTitle("");
@@ -50,18 +44,12 @@ function SongPage({ props }) {
 
   function removeWantedSong(index) {
 
-    setSongRequests(prev => ({
-      ...prev,
-      yes: prev.yes.filter((_, i) => i !== index)
-    }));
+    dispatch({ type: "songRemoved", list: "yes", index });
   }
 
   function removeUnwantedSong(index) {
 
-    setSongRequests(prev => ({
-      ...prev,
-      no: prev.no.filter((_, i) => i !== index)
-    }));
+    dispatch({ type: "songRemoved", list: "no", index });
   }
 
   return (

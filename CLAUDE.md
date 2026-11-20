@@ -17,7 +17,7 @@ informational pages (schedule, our story, FAQ, accommodation).
   in `src/pages/Home.js`, configured via `REACT_APP_CLOUDINARY_CLOUD_NAME`.
 - **Fuse.js** for fuzzy guest-name search.
 - Installed but not yet used: `react-hook-form`, `zod`, `@hookform/resolvers`, `firebaseui`,
-  `axios`. The RSVP form is managed with plain `useState`.
+  `axios`. The RSVP form is managed with React's built-in `useReducer` and `useState`.
 
 ## Architecture
 
@@ -30,8 +30,10 @@ informational pages (schedule, our story, FAQ, accommodation).
 
 ### RSVP flow
 
-`src/pages/Rsvp.js` owns all form state (`selectedGuest`, `partyMembers`, `rsvpStatus`,
-`dietaryRequirements`, `songRequests`, `currentPage`, submit status) and chooses the step to render:
+`src/pages/Rsvp.js` owns all form state and chooses the step to render. The response being built
+(`selectedGuest`, `partyMembers`, `additionalGuests`, `rsvpStatus`, `dietaryRequirements`,
+`songRequests`) lives in one `useReducer` defined in `src/pages/rsvpReducer.js`. `currentPage`,
+`submitStatus` and the search text stay as `useState`.
 
 1. **Step 0, `RsvpPage`**: loads the full `invitations` collection once, searches it client-side,
    then shows the matched party with yes/no buttons for each member.
@@ -70,8 +72,14 @@ initializing Firebase Auth there.
   applies to `RsvpPage`, `DietPage`, `SongPage` and `SongEntryBox`. Other components destructure
   named props normally (`function PageHeader({ title, className })`). Match whichever style the
   surrounding code uses.
-- **State is lifted to the parent.** Step components are presentational and call the setters they
-  receive. There is no Context or external state library.
+- **State is lifted to the parent.** Step components are presentational. They send changes to the
+  response through the `dispatch` they receive, or through a callback such as `onDietaryChange`.
+  There is no Context or external state library.
+- **`useReducer` when a rule spans several values, `useState` otherwise.** Response rules that span
+  fields, such as "a host's no removes their extra guests and those guests' answers", live in
+  `rsvpReducer.js` as named actions. Independent UI values (`currentPage`, search results, text
+  inputs) use `useState`. Derive a value instead of storing it when it can be computed, as with
+  `attendees` and `sessionState`.
 - **Search is tiered.** An exact normalized substring match against `lookupNames` runs first. Only
   if it finds nothing does a Fuse.js fuzzy search run (threshold 0.35). Input is debounced 250 ms
   through a `useRef` timer. Reuse this pattern for any other searchable list.

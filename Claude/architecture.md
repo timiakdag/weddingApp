@@ -47,9 +47,19 @@ An image carousel served by Cloudinary:
 
 `src/pages/Rsvp.js` owns all the state for the multi-step form:
 
-- `name`, `selectedGuest`, `partyMembers`, `rsvpStatus`
-- `dietaryRequirements`, `songRequests`
-- `currentPage`, `submitStatus`, `isSubmitting`
+- **`useReducer(rsvpReducer)`** (`src/pages/rsvpReducer.js`): the response being built, made up
+  of `selectedGuest`, `partyMembers`, `additionalGuests`, `rsvpStatus`, `dietaryRequirements` and
+  `songRequests`. Actions: `partySelected`, `responseLoaded`, `partyCleared`, `guestStatusSet`,
+  `additionalGuestNamed`, `dietChanged`, `songAdded`, `songRemoved`. The reducer enforces the
+  rules that span fields, and `responseLoaded` ignores a response for a party that is no longer
+  selected.
+- **`useState`**: `name` (search text), `currentPage`, and
+  `submitStatus` (`"idle" | "submitting" | "success" | "error"`).
+- **Derived on each render**: `attendees` (party members plus named extra guests) in `Rsvp.js`,
+  and `sessionState` (`"party"` when `partyMembers` is non-empty, otherwise `"search"`) in
+  `RsvpPage.js`.
+
+`RsvpPage` and `SongPage` receive `dispatch`. `DietPage` receives an `onDietaryChange` callback.
 
 `getCurrentPage()` picks the step to render:
 
@@ -76,6 +86,9 @@ The Back, Next and Submit buttons are hidden (not disabled) when they don't appl
 - After submitting, `partyIdentifier` is cached in `localStorage`.
 - On a return visit, `RsvpPage` restores the party from that cache once `invitations` has loaded,
   and `loadExistingResponse` fetches the earlier answers.
+- `RsvpPage` remounts every time the guest returns to step 0, so the restore skips when
+  `partyMembers` is already populated. Without that check, Back would overwrite unsubmitted
+  answers with the saved response.
 - In development, the cache is cleared on mount so local testing never starts from stale state.
 
 ## Firebase

@@ -26,10 +26,27 @@ destructured props would be a deliberate refactor, not something to do piecemeal
 
 ## State lifted to the parent
 
-`Rsvp.js` owns the form state and passes setters down. The step components are presentational and
-call the setters they're given. There's no Context, Redux or Zustand, because the component tree
-is shallow enough not to need them. Reconsider only if a feature needs to share state across
-distant parts of the tree.
+`Rsvp.js` owns the form state. The step components are presentational. They change the response
+by calling the `dispatch` they're given (`RsvpPage`, `SongPage`) or a callback (`DietPage`'s
+`onDietaryChange`). There's no Context, Redux or Zustand, because the component tree is shallow
+enough not to need them. Reconsider only if a feature needs to share state across distant parts of
+the tree.
+
+## `useReducer` vs `useState`
+
+- **`useReducer`** applies when a rule covers more than one value, so that one event has to update
+  several of them consistently. The RSVP response (`rsvpReducer.js`) is the example. Naming an
+  extra guest also sets their `rsvpStatus`, and a host's "no" removes the host's extra guests and
+  those guests' answers. Name actions after what happened (`guestStatusSet`, `partyCleared`), and
+  keep the reducer pure: no Firestore calls and no `localStorage` (do those in the component, then
+  dispatch the result).
+- **`useState`** applies to independent values: `currentPage`, search `results`, text inputs.
+- **Merge, don't pair.** When two values are really one value with several states, use one
+  `useState` holding a status string. `submitStatus` used to be a separate `isSubmitting` boolean.
+- **Derive, don't store.** If a value can be computed from state or props (`attendees`,
+  `sessionState`), compute it during render.
+
+Changing the response shape or its rules means updating `rsvpReducer.js` and its header comment.
 
 ## Search: exact first, then fuzzy
 
@@ -64,7 +81,7 @@ local testing doesn't start from stale state. Keep that guard if you add more pe
 
 ## Comments as data-shape documentation
 
-`Rsvp.js` and `DietPage.js` open with a comment block describing the shape of their state and the
+`Rsvp.js`, `rsvpReducer.js` and `DietPage.js` open with a comment block describing the shape of their state and the
 Firestore documents they use. The project has no TypeScript or prop-types, so add the same kind of
 comment to new Firestore-backed state.
 

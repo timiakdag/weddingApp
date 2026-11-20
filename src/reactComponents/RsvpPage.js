@@ -2,33 +2,23 @@ import Fuse from "fuse.js";
 import { useMemo, useRef, useEffect, useState, useCallback, Fragment } from "react";
 import {db} from "../firebase";
 import {collection,getDoc,getDocs, doc} from "firebase/firestore";
-
-// Stable id for an extra-guest slot, so rsvpStatus/dietaryRequirements keys survive resubmits.
-export function additionalGuestId(hostGuestId, index) {
-    return `${hostGuestId}-guest-${index}`;
-}
+import { additionalGuestId } from "../pages/rsvpReducer";
 
 function RsvpPage({props}){
     const name = props.name;
     const setName = props.setName;
     const partyMembers = props.partyMembers;
-    const setPartyMembers = props.setPartyMembers;
     const additionalGuests = props.additionalGuests;
-    const setAdditionalGuests = props.setAdditionalGuests;
-    const setAdditionalGuestName = props.setAdditionalGuestName;
-    const setGuestStatus = props.setGuestStatus;
-    const setSelectedGuest = props.setSelectedGuest;
-    const setRsvpStatus = props.setRsvpStatus;
     const rsvpStatus = props.rsvpStatus;
-    const setDietaryRequirements = props.setDietaryRequirements;
-    const setSongRequests = props.setSongRequests;
+    const dispatch = props.dispatch;
 
     const timeoutRef = useRef(null);
 
     const [results,setResults] = useState([]);
     const [allGuests,setAllGuests] = useState([]);
-    const [sessionState,setSessionState] = useState(partyMembers.length>0 ? "party":"search");
     const [loadingGuests,setLoadingGuests] = useState(partyMembers.length>0 ? false:true);
+    // Derived, not stored: a party is on screen exactly when one has been loaded.
+    const sessionState = partyMembers.length > 0 ? "party" : "search";
 
     const loadExistingResponse = useCallback(async (partyIdentifier) => {
 
@@ -43,21 +33,12 @@ function RsvpPage({props}){
 
         if (!responseSnap.exists()) {return;}
 
-        const data = responseSnap.data();
-
-        setRsvpStatus(data.rsvpStatus || {});
-
-        setDietaryRequirements(data.dietaryRequirements || {});
-
-        setSongRequests(data.songRequests || {yes: [],no: []});
-
-        // Extra guests only exist in responses, never in invitations.
-        setAdditionalGuests((data.partyMembers || []).filter(m => m.isAdditionalGuest));
+        dispatch({ type: "responseLoaded", partyIdentifier, data: responseSnap.data() });
 
       } catch (err) {
 
         console.error("Error loading RSVP:",err);
-      }},[setRsvpStatus,setDietaryRequirements,setSongRequests,setAdditionalGuests]);
+      }},[dispatch]);
 
   const fuse = useMemo(() => {
           return new Fuse(allGuests,{
@@ -89,6 +70,12 @@ function RsvpPage({props}){
       return;
     }
 
+    // Already showing a party: this is a remount from Back, not a returning visit.
+    // Restoring again would overwrite the guest's unsubmitted answers with the saved response.
+    if (partyMembers.length > 0) {
+      return;
+    }
+
     if (process.env.NODE_ENV === "development") {
     localStorage.removeItem("partyIdentifier");
     }
@@ -105,13 +92,11 @@ function RsvpPage({props}){
       return;
     }
 
-    setPartyMembers(members);
-    setSelectedGuest(members[0]);
+    dispatch({ type: "partySelected", guest: members[0], members });
     setName(members[0].fullName);
     setResults([]);
-    setSessionState("party");
 
-  loadExistingResponse(savedPartyIdentifier);}, [allGuests,loadExistingResponse,setName,setSelectedGuest,setPartyMembers]);
+  loadExistingResponse(savedPartyIdentifier);}, [allGuests,partyMembers.length,loadExistingResponse,setName,dispatch]);
   
 
   useEffect(() => {
@@ -182,42 +167,20 @@ function RsvpPage({props}){
       .trim();
     }
 
-    async function selectGuest(guest) {
+    function selectGuest(guest) {
     setName(guest.fullName);
-    setSelectedGuest(guest);
     setResults([]);
-    loadParty(guest.partyIdentifier);
-    setSessionState("party");
+    const members = allGuests.filter(g => g.partyIdentifier === guest.partyIdentifier);
+    dispatch({ type: "partySelected", guest, members });
     loadExistingResponse(guest.partyIdentifier);
-    }
-
-    function loadParty(partyIdentifier) {
-      const members = allGuests.filter(g => g.partyIdentifier === partyIdentifier);
-
-      setPartyMembers(members);
-
-      setRsvpStatus(prev => {
-        const updated = { ...prev };
-
-        for (const member of members) {
-          updated[member.guestId] ??= null;}
-
-        return updated;})
     }
 
     function resetGuestSelection() {
     localStorage.removeItem("partyIdentifier");
 
-    setSessionState("search");
     setName("");
     setResults([]);
-    setPartyMembers([]);
-    setAdditionalGuests([]);
-    setSelectedGuest(null);
-
-    setRsvpStatus({});
-    setDietaryRequirements({});
-    setSongRequests({ yes: [], no: [] });
+    dispatch({ type: "partyCleared" });
 }
 
     if (loadingGuests) {
@@ -272,7 +235,7 @@ return (
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setGuestStatus(member.guestId, "yes")}
+                onClick={() => dispatch({ type: "guestStatusSet", guestId: member.guestId, status: "yes" })}
                 className={`px-3 py-1 border rounded text-black transition
                 ${rsvpStatus[member.guestId] === "yes"
                   ? "bg-blue-200 border-blue-400"
@@ -284,7 +247,7 @@ return (
 
               <button
                 type="button"
-                onClick={() => setGuestStatus(member.guestId, "no")}
+                onClick={() => dispatch({ type: "guestStatusSet", guestId: member.guestId, status: "no" })}
                 className={`px-3 py-1 border rounded text-black transition
                 ${rsvpStatus[member.guestId] === "no"
                   ? "bg-blue-200 border-blue-400"
@@ -303,7 +266,7 @@ return (
                   key={extraId}
                   type="text"
                   value={extraGuest?.fullName ?? ""}
-                  onChange={e => setAdditionalGuestName(member.guestId, i, e.target.value)}
+                  onChange={e => dispatch({ type: "additionalGuestNamed", hostGuestId: member.guestId, index: i, name: e.target.value })}
                   disabled={rsvpStatus[member.guestId] === "no"}
                   maxLength={60}
                   placeholder="Guest's name"

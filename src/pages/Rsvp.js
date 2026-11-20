@@ -1,27 +1,23 @@
-import { useState } from "react";
+import { useReducer, useState } from "react";
 import {doc, setDoc, serverTimestamp} from "firebase/firestore";
 import { db } from "../firebase";
-import RsvpPage, { additionalGuestId } from "../reactComponents/RsvpPage"
+import { rsvpReducer, initialRsvpState } from "./rsvpReducer";
+import RsvpPage from "../reactComponents/RsvpPage"
 import DietPage from "../reactComponents/DietPage";
 import SongPage from "../reactComponents/SongPage";
 import ArchedTextBox from '../reactComponents/ArchedTextBox';
 import InsideArchDiv from "../reactComponents/InsideArchDiv";
 
 function Rsvp(){
-    //:Doc variables: 
-    // name -> name of the selected guest
-    // results -> for the type ahead lookup on selecting guests
-    // selectedGuest -> the guest object from firebase
-    // allGuests -> every guest from the database
-    // partyMembers -> list of members in a party (invitations docs only)
-    // additionalGuests -> extra guests named by the party, one slot per allowedGuests
-    //   { guestId: "<hostGuestId>-guest-<i>", fullName, isAdditionalGuest: true, hostGuestId }
-    //   A non-empty name means the extra guest is attending (rsvpStatus "yes").
+    //:Doc variables:
+    // name -> text in the guest search box
+    // rsvp -> the response being built (selectedGuest, partyMembers, additionalGuests, rsvpStatus,
+    //   dietaryRequirements, songRequests). Shape and rules are in rsvpReducer.js. Update it with
+    //   dispatch(action), never by setting fields directly.
     // attendees -> derived: partyMembers + named additionalGuests. Drives diet pages and the saved partyMembers.
-    // rsvpStatus -> Yes or no answer from the party
     // currentPage -> Pagination of RSVP form
-    // songRequests -> array of song requests
-    // 
+    // submitStatus -> "idle" | "submitting" | "success" | "error"
+    //
     //:Doc database
     // invitations:
     //  allowedGuests - int
@@ -34,17 +30,12 @@ function Rsvp(){
     //  searchText - for fuzzy search when there is a misspelling
     //  searchTokens - helps scoring the search (not used yet)
     const [name,setName] = useState("");
-    const [selectedGuest,setSelectedGuest] = useState(null);
-    const [partyMembers, setPartyMembers] = useState([]);
-    const [additionalGuests, setAdditionalGuests] = useState([]);
-    const [rsvpStatus, setRsvpStatus] = useState({});
+    const [rsvp, dispatch] = useReducer(rsvpReducer, initialRsvpState);
+    const { selectedGuest, partyMembers, additionalGuests, rsvpStatus, dietaryRequirements, songRequests } = rsvp;
     const [currentPage,setCurrentPage] = useState(0);
-    const [dietaryRequirements,setDietaryRequirements] = useState({});
-    const [songRequests,setSongRequests] = useState({yes:[],no:[]});
     const attendees = [...partyMembers, ...additionalGuests.filter(g => g.fullName.trim())];
     const songPage = attendees.length + 1;
     const [submitStatus,setSubmitStatus] = useState("idle");
-    const [isSubmitting,setIsSubmitting] = useState(false);
 
     async function handleSubmit(e){
       e.preventDefault(e);
@@ -53,7 +44,7 @@ function Rsvp(){
         return;
       }
       try {
-      setIsSubmitting(true);
+      setSubmitStatus("submitting");
       const partyIdentifier =
       selectedGuest.partyIdentifier;
 
@@ -96,66 +87,8 @@ function Rsvp(){
 
       console.error("Error saving response:",err);
       setSubmitStatus("error");
-    } finally {
-      setIsSubmitting(false);
     }
   }
-  
-
-    const setGuestStatus = (guestId,status) => {
-      setRsvpStatus(prev => ({
-        ...prev,[guestId]:status
-      }));
-
-      // An extra guest can't come without their host, so clear the host's extra guests.
-      if (status === "no") {
-        removeAdditionalGuests(
-          additionalGuests.filter(g => g.hostGuestId === guestId).map(g => g.guestId));
-      }
-    }
-
-    function omitKeys(obj, keys) {
-      const copy = { ...obj };
-      for (const key of keys) {
-        delete copy[key];
-      }
-      return copy;
-    }
-
-    // Drop answers keyed by these ids so no stale entries are saved.
-    function clearAnswers(guestIds) {
-      setRsvpStatus(prev => omitKeys(prev, guestIds));
-      setDietaryRequirements(prev => omitKeys(prev, guestIds));
-    }
-
-    function removeAdditionalGuests(guestIds) {
-      if (guestIds.length === 0) {
-        return;
-      }
-      setAdditionalGuests(prev => prev.filter(g => !guestIds.includes(g.guestId)));
-      clearAnswers(guestIds);
-    }
-
-    function setAdditionalGuestName(hostGuestId, index, name) {
-      const guestId = additionalGuestId(hostGuestId, index);
-
-      if (name === "") {
-        removeAdditionalGuests([guestId]);
-        return;
-      }
-
-      const guest = { guestId, fullName: name, isAdditionalGuest: true, hostGuestId };
-      setAdditionalGuests(prev => prev.some(g => g.guestId === guestId)
-        ? prev.map(g => (g.guestId === guestId ? guest : g))
-        : [...prev, guest]);
-
-      // Only whitespace typed so far: keep the text in the box, but they aren't attending yet.
-      if (name.trim()) {
-        setRsvpStatus(prev => ({ ...prev, [guestId]: "yes" }));
-      } else {
-        clearAnswers([guestId]);
-      }
-    }
 
     /*
       Pagination functions -> should probably break this functions up a bit 
@@ -170,11 +103,8 @@ function Rsvp(){
     }
 
     function handleDietaryChange(guestId, value) {
-  setDietaryRequirements(prev => ({
-    ...prev,
-    [guestId]: value
-  }));
-}
+      dispatch({ type: "dietChanged", guestId, value });
+    }
 
     function getCurrentPage() {
       let page;
@@ -183,16 +113,9 @@ function Rsvp(){
           "name" : name,
           "setName" : setName,
           "partyMembers": partyMembers,
-          "setPartyMembers": setPartyMembers,
           "additionalGuests": additionalGuests,
-          "setAdditionalGuests": setAdditionalGuests,
-          "setAdditionalGuestName": setAdditionalGuestName,
-          "setGuestStatus": setGuestStatus,
-          "setSelectedGuest": setSelectedGuest,
-          "setRsvpStatus": setRsvpStatus,
           "rsvpStatus": rsvpStatus,
-          "setDietaryRequirements": setDietaryRequirements,
-          "setSongRequests":setSongRequests
+          "dispatch": dispatch,
         }}/>;
       }else if (currentPage<songPage){
         const dietIndex = currentPage - 1;
@@ -201,7 +124,7 @@ function Rsvp(){
           "onDietaryChange": handleDietaryChange,
         }}/>;
       }else{
-        page = <SongPage props={{songRequests,setSongRequests}}></SongPage>;
+        page = <SongPage props={{songRequests,dispatch}}></SongPage>;
       }
       
       return(<div>
@@ -283,7 +206,7 @@ function Rsvp(){
                   <button type="button" onClick={nextPageLogic} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black">Next</button>
                 )}
                 {showSubmitButton() && (
-                  <input type="submit" disabled={isSubmitting} value={isSubmitting ? "Submitting..." : "Submit"} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black"/>)}
+                  <input type="submit" disabled={submitStatus === "submitting"} value={submitStatus === "submitting" ? "Submitting..." : "Submit"} className="px-4 py-2 bg-white border rounded hover:bg-gray-100 text-black"/>)}
               
               </div>)}
             </form>
