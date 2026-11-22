@@ -6,7 +6,7 @@ import './Arch.css'
 import PageHeader from "../reactComponents/PageHeader";
 import InsideArchDiv from "../reactComponents/InsideArchDiv";
 
-const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 
 
 const cld = new Cloudinary({

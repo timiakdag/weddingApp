@@ -76,7 +76,7 @@ function RsvpPage({props}){
       return;
     }
 
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta.env.DEV) {
     localStorage.removeItem("partyIdentifier");
     }
 
