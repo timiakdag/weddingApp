@@ -94,7 +94,6 @@ function RsvpPage({props}){
 
     dispatch({ type: "partySelected", guest: members[0], members });
     setName(members[0].fullName);
-    setResults([]);
 
   loadExistingResponse(savedPartyIdentifier);}, [allGuests,partyMembers.length,loadExistingResponse,setName,dispatch]);
   

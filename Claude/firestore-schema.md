@@ -1,7 +1,7 @@
 # Firestore Schema
 
 The repo has no schema file. The field shapes below come from the read and write calls in
-`src/pages/Rsvp.js` and `src/reactComponents/RsvpPage.js`. If a task depends on exact field
+`src/pages/Rsvp.jsx` and `src/reactComponents/RsvpPage.jsx`. If a task depends on exact field
 behavior, check the Firebase console. The security rules, however, are the deployed rules, not a
 reconstruction.
 
@@ -77,7 +77,7 @@ existing document.
 }
 ```
 
-On a return visit, `loadExistingResponse` in `RsvpPage.js` reads the document back and fills in
+On a return visit, `loadExistingResponse` in `RsvpPage.jsx` reads the document back and fills in
 `rsvpStatus`, `dietaryRequirements` and `songRequests`. It also restores extra guests by picking
 the `isAdditionalGuest` entries out of `partyMembers`. Extra guests exist only in `responses`, so
 the guest search (which covers `invitations` only) never finds them. Their IDs are deterministic,
@@ -85,5 +85,5 @@ so editing a name keeps the same keys in `rsvpStatus` and `dietaryRequirements`.
 
 ## Leftover snippet
 
-There's a commented-out Firebase quickstart snippet at the bottom of `Rsvp.js` that references a
+There's a commented-out Firebase quickstart snippet at the bottom of `Rsvp.jsx` that references a
 `users` collection. It's boilerplate, not part of the schema.

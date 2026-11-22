@@ -26,7 +26,7 @@ destructured props would be a deliberate refactor, not something to do piecemeal
 
 ## State lifted to the parent
 
-`Rsvp.js` owns the form state. The step components are presentational. They change the response
+`Rsvp.jsx` owns the form state. The step components are presentational. They change the response
 by calling the `dispatch` they're given (`RsvpPage`, `SongPage`) or a callback (`DietPage`'s
 `onDietaryChange`). There's no Context, Redux or Zustand, because the component tree is shallow
 enough not to need them. Reconsider only if a feature needs to share state across distant parts of
@@ -50,7 +50,7 @@ Changing the response shape or its rules means updating `rsvpReducer.js` and its
 
 ## Search: exact first, then fuzzy
 
-The guest search in `RsvpPage.js` runs in two tiers:
+The guest search in `RsvpPage.jsx` runs in two tiers:
 
 1. `tier1Search` normalizes the query (lowercases it and strips everything except letters and
    spaces), splits it into tokens, and keeps guests whose `lookupNames` contain every token.
@@ -69,24 +69,34 @@ that utilities can't express well.
 
 ## Effects and cleanup
 
-Clean up anything an effect sets up. `Home.js` clears its carousel interval, and `RsvpPage.js`
+Clean up anything an effect sets up. `Home.jsx` clears its carousel interval, and `RsvpPage.jsx`
 clears its debounce timer on unmount. When a `useCallback` is used as an effect dependency, list
-its own dependencies in full. `loadExistingResponse` in `RsvpPage.js` is an example.
+its own dependencies in full. `loadExistingResponse` in `RsvpPage.jsx` is an example.
 
 ## Persistence
 
 `localStorage` is used for one thing only: caching `partyIdentifier` so a returning guest skips the
-search step. `RsvpPage.js` clears it on mount when `process.env.NODE_ENV === "development"` so
+search step. `RsvpPage.jsx` clears it on mount when `import.meta.env.DEV` is true so
 local testing doesn't start from stale state. Keep that guard if you add more persisted state.
 
 ## Comments as data-shape documentation
 
-`Rsvp.js`, `rsvpReducer.js` and `DietPage.js` open with a comment block describing the shape of their state and the
+`Rsvp.jsx`, `rsvpReducer.js` and `DietPage.jsx` open with a comment block describing the shape of their state and the
 Firestore documents they use. The project has no TypeScript or prop-types, so add the same kind of
 comment to new Firestore-backed state.
 
 ## Environment variables
 
-All client config goes through `REACT_APP_*` variables in CRA env files, never hard-coded
-values. Examples are the Firebase config in `firebase.js` and the Cloudinary cloud name in
-`Home.js`.
+All client config goes through `VITE_*` variables in Vite's `.env` files, read with
+`import.meta.env.VITE_*`, never hard-coded values. Examples are the Firebase config in
+`firebase.js` and the Cloudinary cloud name in `Home.jsx`. Anything prefixed `VITE_` is shipped
+in the public bundle, so the prefix is only for values that are safe to expose. For
+environment checks, use `import.meta.env.DEV` / `.PROD` / `.MODE` rather than `process.env`.
+
+## File extensions and linting
+
+- Components and any file containing JSX are `.jsx`. Plain JS modules are `.js`. Vite rejects
+  JSX in a `.js` file with "Unexpected JSX expression".
+- Leave the extension off imports (`import Rsvp from "./pages/Rsvp"`), as the existing code does.
+- Run `npm run lint` before building to deploy. Treat `react-hooks/exhaustive-deps` warnings
+  as real, and add the missing dependency rather than silencing the rule.

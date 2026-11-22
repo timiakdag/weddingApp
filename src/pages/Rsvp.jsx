@@ -14,7 +14,9 @@ function Rsvp(){
     // rsvp -> the response being built (selectedGuest, partyMembers, additionalGuests, rsvpStatus,
     //   dietaryRequirements, songRequests). Shape and rules are in rsvpReducer.js. Update it with
     //   dispatch(action), never by setting fields directly.
-    // attendees -> derived: partyMembers + named additionalGuests. Drives diet pages and the saved partyMembers.
+    // everyone -> derived: partyMembers + named additionalGuests. Saved as partyMembers, so a guest
+    //   who declined is still on record.
+    // attendees -> derived: the subset of everyone whose rsvpStatus is "yes". One diet page each.
     // currentPage -> Pagination of RSVP form
     // submitStatus -> "idle" | "submitting" | "success" | "error"
     //
@@ -33,7 +35,8 @@ function Rsvp(){
     const [rsvp, dispatch] = useReducer(rsvpReducer, initialRsvpState);
     const { selectedGuest, partyMembers, additionalGuests, rsvpStatus, dietaryRequirements, songRequests } = rsvp;
     const [currentPage,setCurrentPage] = useState(0);
-    const attendees = [...partyMembers, ...additionalGuests.filter(g => g.fullName.trim())];
+    const everyone = [...partyMembers, ...additionalGuests.filter(g => g.fullName.trim())];
+    const attendees = everyone.filter(g => rsvpStatus[g.guestId] === "yes");
     const songPage = attendees.length + 1;
     const [submitStatus,setSubmitStatus] = useState("idle");
 
@@ -58,7 +61,7 @@ function Rsvp(){
           fullName: selectedGuest.fullName
         },
 
-        partyMembers: attendees.map(member => member.isAdditionalGuest
+        partyMembers: everyone.map(member => member.isAdditionalGuest
           ? {
               guestId: member.guestId,
               fullName: member.fullName.trim(),

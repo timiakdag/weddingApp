@@ -13,7 +13,8 @@ code, and keeping project notes up to date.
 
 ## Tech stack
 
-- **React 19** (Create React App) with **react-router-dom** for page routing
+- **React 19** built with **Vite** (migrated from Create React App), with **react-router-dom**
+  for page routing
 - **Tailwind CSS** for styling
 - **Firebase**: Firestore for data, Firebase Hosting with separate test and production projects
 - **Cloudinary** for hosting and resizing the home page photos
@@ -70,8 +71,9 @@ changes against test data before deploying to the real site.
 ## Running locally
 
 1. `npm install`
-2. Create a `.env` file with your own Firebase config (`REACT_APP_FIREBASE_API_KEY`,
-   `REACT_APP_FIREBASE_AUTH_DOMAIN`, `REACT_APP_FIREBASE_PROJECT_ID`,
-   `REACT_APP_FIREBASE_STORAGE_BUCKET`, `REACT_APP_FIREBASE_MESSAGING_SENDER_ID`,
-   `REACT_APP_FIREBASE_APP_ID`) and `REACT_APP_CLOUDINARY_CLOUD_NAME`.
-3. `npm start`, then open http://localhost:3000
+2. Create a `.env` file with your own Firebase config (`VITE_FIREBASE_API_KEY`,
+   `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`,
+   `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`) and
+   `VITE_CLOUDINARY_CLOUD_NAME`.
+3. `npm run dev`, then open http://localhost:5173
+4. `npm run lint` to check the code, `npm run build` for a production build in `dist/`

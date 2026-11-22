@@ -124,9 +124,11 @@ export function rsvpReducer(state, action) {
     // guestStatusSet
     // When:    a Yes/No button is clicked for a party member in RsvpPage.
     // Payload: { guestId, status: "yes" | "no" }
-    // Changes: sets rsvpStatus[guestId]. On "no", also removes this guest's extra guests and their
-    //          rsvpStatus/dietaryRequirements entries.
-    // Why:     an extra guest can't attend without their host.
+    // Changes: sets rsvpStatus[guestId]. On "no", also clears this guest's own dietaryRequirements,
+    //          and removes their extra guests along with those guests' rsvpStatus/dietaryRequirements
+    //          entries.
+    // Why:     a guest who isn't coming gets no diet page, so nothing should be saved for them, and an
+    //          extra guest can't attend without their host.
     case "guestStatusSet": {
       const next = {
         ...state,
@@ -135,10 +137,14 @@ export function rsvpReducer(state, action) {
       if (action.status !== "no") {
         return next;
       }
+      const declined = {
+        ...next,
+        dietaryRequirements: omitKeys(next.dietaryRequirements, [action.guestId]),
+      };
       const hostsExtras = state.additionalGuests
         .filter(g => g.hostGuestId === action.guestId)
         .map(g => g.guestId);
-      return removeAdditionalGuests(next, hostsExtras);
+      return removeAdditionalGuests(declined, hostsExtras);
     }
 
     // additionalGuestNamed

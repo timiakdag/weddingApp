@@ -6,44 +6,49 @@ informational pages (schedule, our story, FAQ, accommodation).
 
 ## Tech stack
 
-- **React 19** on Create React App (`react-scripts` 5).
-- **react-router-dom v7** for client-side routing (`src/App.js`).
-- **Tailwind CSS 3** utility classes in JSX. Plain CSS files (`App.css`, `pages/Arch.css`,
+- **React 19** built with **Vite** (`vite.config.mjs`, `@vitejs/plugin-react`). Migrated from
+  Create React App. Vite's entry point is `index.html` at the repo root, which loads
+  `src/index.jsx`. Files containing JSX use the `.jsx` extension.
+- **react-router-dom v7** for client-side routing (`src/App.jsx`).
+- **Tailwind CSS 3** utility classes in JSX, run through PostCSS (`postcss.config.js`). Plain CSS files (`App.css`, `pages/Arch.css`,
   `pages/ArchedText.css`, `pages/Home.css`) cover the decorative arch shapes that are awkward to
   express as utilities.
 - **Firebase**: Firestore is the datastore (`src/firebase.js` exports `db`). Firebase Hosting
   serves the site, with separate prod and test projects.
 - **Cloudinary** (`@cloudinary/react`, `@cloudinary/url-gen`) serves the home-page image carousel
-  in `src/pages/Home.js`, configured via `REACT_APP_CLOUDINARY_CLOUD_NAME`.
+  in `src/pages/Home.jsx`, configured via `VITE_CLOUDINARY_CLOUD_NAME`.
 - **Fuse.js** for fuzzy guest-name search.
-- Installed but not yet used: `react-hook-form`, `zod`, `@hookform/resolvers`, `firebaseui`,
-  `axios`. The RSVP form is managed with React's built-in `useReducer` and `useState`.
+- **ESLint 10** (flat config in `eslint.config.mjs`) with `eslint-plugin-react-hooks`. Run it
+  with `npm run lint`. There is no test runner yet.
+- Installed but not yet used: `react-hook-form`, `zod`, `@hookform/resolvers`, `axios`. The RSVP
+  form is managed with React's built-in `useReducer` and `useState`.
 
 ## Architecture
 
 - `src/pages/`: routed screens. `src/reactComponents/`: shared components and the RSVP sub-steps.
-- Routes (`src/App.js`): `/` Home, `/schedule`, `/ourstory` (About), `/q+a` (Questions),
+- Routes (`src/App.jsx`): `/` Home, `/schedule`, `/ourstory` (About), `/q+a` (Questions),
   `/accommodation`, `/rsvp`.
 - Informational pages share a layout through `ContentWrapper` (`PageHeader` + `InsideArchDiv` +
   `ArchedTextBox`).
-- `App.js` swaps the desktop and mobile background images with Tailwind responsive classes.
+- `App.jsx` swaps the desktop and mobile background images with Tailwind responsive classes.
 
 ### RSVP flow
 
-`src/pages/Rsvp.js` owns all form state and chooses the step to render. The response being built
+`src/pages/Rsvp.jsx` owns all form state and chooses the step to render. The response being built
 (`selectedGuest`, `partyMembers`, `additionalGuests`, `rsvpStatus`, `dietaryRequirements`,
 `songRequests`) lives in one `useReducer` defined in `src/pages/rsvpReducer.js`. `currentPage`,
 `submitStatus` and the search text stay as `useState`.
 
 1. **Step 0, `RsvpPage`**: loads the full `invitations` collection once, searches it client-side,
    then shows the matched party with yes/no buttons for each member.
-2. **Steps 1..N, `DietPage`**: one step per party member, with a free-text dietary field.
+2. **Steps 1..N, `DietPage`**: one step per attending guest (`rsvpStatus` "yes", including named
+   extra guests), with a free-text dietary field.
 3. **Final step, `SongPage`**: "play" and "don't play" lists of `{ artist, title }`.
 
 On submit, `setDoc` writes a single document to `responses/{partyIdentifier}`, so resubmitting
 overwrites the previous response instead of duplicating it. `partyIdentifier` is cached in
 `localStorage` so a returning guest's party and earlier answers reload. That cache is cleared on
-mount when `NODE_ENV === "development"`.
+mount when `import.meta.env.DEV` is true (`npm run dev`).
 
 ### Firestore data
 
@@ -60,8 +65,8 @@ mount when `NODE_ENV === "development"`.
 ### Not yet wired up
 
 These files are on disk but not routed or imported: `pages/Gifts.js` (empty, a planned registry
-page), `pages/Diet.js`, `reactComponents/FormCard.js`, `SongInput.js` and `InnerArchDiv.js`. The
-site navigation, including the mobile hamburger menu, is `reactComponents/Navbar.js`.
+page), `reactComponents/FormCard.jsx`, `SongInput.jsx` and `InnerArchDiv.jsx`. The
+site navigation, including the mobile hamburger menu, is `reactComponents/Navbar.jsx`.
 Authentication is not active: `firebase.js` exports only `db`, so adding sign-in would start with
 initializing Firebase Auth there.
 
@@ -89,25 +94,32 @@ initializing Firebase Auth there.
 
 ## Config and deployment
 
-- Environment variables follow CRA's `.env` file convention (`.env`, `.env.development`,
-  `.env.production`, `.env.test`, all gitignored). Required: `REACT_APP_FIREBASE_*` (see
-  `src/firebase.js`) and `REACT_APP_CLOUDINARY_CLOUD_NAME`.
-- Firebase aliases in `.firebaserc` are `prod` and `test`. `firebase.json` serves `build/` as a
+- Environment variables use Vite's `.env` files (`.env`, `.env.development`, `.env.production`,
+  `.env.test`, all gitignored). Only variables prefixed `VITE_` reach the app, through
+  `import.meta.env`. Required: `VITE_FIREBASE_*` (see `src/firebase.js`) and
+  `VITE_CLOUDINARY_CLOUD_NAME`. Every `VITE_` value is visible in the public bundle, so never use
+  that prefix for a server-side secret.
+- Scripts: `npm run dev` (dev server on port 5173; `npm start` is an alias), `npm run build`
+  (production, uses `.env.production`), `npm run build:test` (`vite build --mode test`, uses
+  `.env.test`), `npm run preview` (serves the last build locally), `npm run lint`.
+- Firebase aliases in `.firebaserc` are `prod` and `test`. `firebase.json` serves `dist/` as a
   SPA, rewriting all routes to `index.html`.
-- Deploy steps: `firebase use <prod|test>`, then `npm run build` (or `npm run build:test`, which
-  uses `.env.test`), then `firebase deploy --only hosting`.
+- Deploy steps: `firebase use <prod|test>`, then `npm run build` (or `npm run build:test`), then
+  `firebase deploy --only hosting`.
 
 ## Known gotchas
 
 - **Build before every deploy.** There's no CI, so `firebase deploy` publishes whatever is in
-  `build/`. Skipping `npm run build` ships a stale site.
+  `dist/`. Skipping `npm run build` ships a stale site. Builds don't lint, so run `npm run lint`
+  as well.
 - **Firestore rules are permissive by design.** `invitations` is client read-only. `responses`
   allows any client to create, update and read any document. The only protection is that the
   document ID is an unguessable UUID. This is an accepted tradeoff for a low-stakes RSVP site.
   Discuss it before tightening, because stricter ownership checks would need Firebase Auth or
   App Check.
 - **The dev-mode `localStorage` clear** in the RSVP flow is intentional. Keep the
-  `NODE_ENV` guard if you add more persisted state.
+  `import.meta.env.DEV` guard if you add more persisted state. Because of it, the returning-guest
+  restore only runs in a build (`npm run build:test`, then `npm run preview`).
 
 More detail, where present, is in `Claude/` (`architecture.md`, `firestore-schema.md`,
 `conventions.md`, `deployment.md`).
